@@ -1,0 +1,365 @@
+<%- include('../partials/admin-header') %>
+
+<div
+  class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+>
+  <h1 class="h2">مدیریت رزروها</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+      <button type="button" class="btn btn-primary" id="add-reservation-btn">
+        <i class="fas fa-plus"></i> افزودن رزرو
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        id="import-excel-btn"
+      >
+        <i class="fas fa-file-excel"></i> بارگذاری از اکسل
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><i class="fas fa-search"></i> جستجو</div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            id="search-input"
+            placeholder="جستجو بر اساس شماره پرسنلی..."
+          />
+          <button class="btn btn-primary" type="button" id="search-btn">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control datepicker"
+            id="date-filter"
+            placeholder="تاریخ"
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            id="filter-btn"
+          >
+            <i class="fas fa-filter"></i> فیلتر
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="fas fa-calendar-alt"></i> لیست رزروها</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>شماره پرسنلی</th>
+            <th>نام</th>
+            <th>تاریخ</th>
+            <th>صبحانه</th>
+            <th>ناهار</th>
+            <th>شام</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="reservations-table-body">
+          <!-- Data will be loaded here dynamically -->
+        </tbody>
+      </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div><span id="total-count">0</span> رزرو</div>
+      <nav aria-label="Page navigation">
+        <ul class="pagination" id="pagination">
+          <!-- Pagination will be generated dynamically -->
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Reservation Modal -->
+<div
+  class="modal fade"
+  id="reservation-modal"
+  tabindex="-1"
+  aria-labelledby="reservation-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reservation-modal-label">افزودن رزرو</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="reservation-form">
+          <input type="hidden" id="reservation-id" />
+          <div class="mb-3">
+            <label for="employee-id-prefix" class="form-label"
+              >شماره پرسنلی *</label
+            >
+            <div class="employee-id-container">
+              <input
+                type="text"
+                class="form-control employee-id-prefix"
+                id="employee-id-prefix"
+                value="110"
+                maxlength="3"
+                required
+              />
+              <span class="employee-id-separator">-</span>
+              <input
+                type="text"
+                class="form-control employee-id-suffix"
+                id="employee-id-suffix"
+                maxlength="4"
+                required
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="reservation-date" class="form-label">تاریخ *</label>
+            <input
+              type="text"
+              class="form-control datepicker"
+              id="reservation-date"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <h6>وعده‌های غذایی</h6>
+            <div class="row">
+              <div class="col-md-4">
+                <label class="form-label">صبحانه</label>
+                <select class="form-select" id="breakfast-status">
+                  <option value="0">بدون رزرو</option>
+                  <option value="1">رزرو در شیفت</option>
+                  <option value="2">رزرو خارج از شیفت</option>
+                  <option value="3">رزرو در شیفت دریافت شد</option>
+                  <option value="4">رزرو خارج از شیفت دریافت شد</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">ناهار</label>
+                <select class="form-select" id="lunch-status">
+                  <option value="0">بدون رزرو</option>
+                  <option value="1">رزرو در شیفت</option>
+                  <option value="2">رزرو خارج از شیفت</option>
+                  <option value="3">رزرو در شیفت دریافت شد</option>
+                  <option value="4">رزرو خارج از شیفت دریافت شد</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">شام</label>
+                <select class="form-select" id="dinner-status">
+                  <option value="0">بدون رزرو</option>
+                  <option value="1">رزرو در شیفت</option>
+                  <option value="2">رزرو خارج از شیفت</option>
+                  <option value="3">رزرو در شیفت دریافت شد</option>
+                  <option value="4">رزرو خارج از شیفت دریافت شد</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          انصراف
+        </button>
+        <button type="button" class="btn btn-primary" id="save-reservation-btn">
+          ذخیره
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Reservation Modal -->
+<div
+  class="modal fade"
+  id="view-modal"
+  tabindex="-1"
+  aria-labelledby="view-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="view-modal-label">مشاهده رزرو</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-2">
+          <div class="col-md-6">
+            <strong>شماره پرسنلی:</strong> <span id="view-employee-id"></span>
+          </div>
+          <div class="col-md-6">
+            <strong>نام کارمند:</strong> <span id="view-employee-name"></span>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-md-6">
+            <strong>واحد:</strong> <span id="view-department"></span>
+          </div>
+          <div class="col-md-6">
+            <strong>سمت:</strong> <span id="view-position"></span>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-md-6">
+            <strong>تاریخ:</strong> <span id="view-date"></span>
+          </div>
+          <div class="col-md-6">
+            <strong>روز هفته:</strong> <span id="view-day"></span>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-md-6">
+            <strong>مهمان:</strong> <span id="view-is-guest"></span>
+          </div>
+        </div>
+        <hr />
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <strong>صبحانه:</strong> <span id="view-breakfast"></span>
+          </div>
+          <div class="col-md-4">
+            <strong>ناهار:</strong> <span id="view-lunch"></span>
+          </div>
+          <div class="col-md-4">
+            <strong>شام:</strong> <span id="view-dinner"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          بستن
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Excel Modal -->
+<div
+  class="modal fade"
+  id="import-modal"
+  tabindex="-1"
+  aria-labelledby="import-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="import-modal-label">بارگذاری از اکسل</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="import-form">
+          <div class="mb-3">
+            <label for="excel-file" class="form-label">فایل اکسل</label>
+            <input
+              type="file"
+              class="form-control"
+              id="excel-file"
+              accept=".xlsx, .xls"
+            />
+          </div>
+          <div class="alert alert-info">
+            <strong>توجه:</strong> فایل اکسل باید شامل ستون‌های زیر باشد:
+            <ul>
+              <li>شماره پرسنلی</li>
+              <li>تاریخ</li>
+              <li>صبحانه (0-4)</li>
+              <li>ناهار (0-4)</li>
+              <li>شام (0-4)</li>
+            </ul>
+            <p>مقادیر وعده‌های غذایی:</p>
+            <ul>
+              <li>0: بدون رزرو</li>
+              <li>1: رزرو در شیفت</li>
+              <li>2: رزرو خارج از شیفت</li>
+              <li>3: مصرف شده در شیفت</li>
+              <li>4: مصرف شده خارج از شیفت</li>
+            </ul>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          انصراف
+        </button>
+        <button type="button" class="btn btn-primary" id="upload-excel-btn">
+          بارگذاری
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div
+  class="modal fade"
+  id="delete-modal"
+  tabindex="-1"
+  aria-labelledby="delete-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="delete-modal-label">تایید حذف</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>آیا از حذف این رزرو اطمینان دارید؟</p>
+        <p class="text-danger">این عملیات غیرقابل بازگشت است.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          انصراف
+        </button>
+        <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+          حذف
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/reservations.js"></script>

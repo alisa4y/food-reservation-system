@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        background-color: #f8f9fa;
+        color: #343a40;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        text-align: center;
+      }
+      .error-container {
+        background-color: #fff;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #dc3545;
+        margin-bottom: 15px;
+      }
+      p {
+        margin-bottom: 20px;
+        font-size: 1.1em;
+      }
+      pre {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: left;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 0.9em;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-container">
+      <h1><%= title %></h1>
+      <p><%= message %></p>
+      <% if (error && error.stack) { %>
+      <pre><code><%= error.stack %></code></pre>
+      <% } %>
+      <p><a href="/admin">بازگشت به داشبورد</a></p>
+    </div>
+  </body>
+</html>

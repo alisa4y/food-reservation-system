@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>اسکنر بارکد</title>
+    <!-- Bootstrap RTL CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+      #scanner-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      #scanner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 10;
+      }
+      #scanner-target {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 70%;
+        height: 30%;
+        transform: translate(-50%, -50%);
+        border: 2px solid #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        z-index: 20;
+      }
+      #result-container {
+        display: none;
+        margin-top: 20px;
+      }
+      #error-message {
+        display: none;
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 20px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .time-display {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .meal-indicator {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .scanner-instructions {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-lg border-0 rounded-lg">
+            <div class="card-header bg-primary text-white text-center">
+              <h3 class="font-weight-light my-2">سیستم اسکنر بارکد رزرو غذا</h3>
+            </div>
+            <div class="card-body">
+              <div class="time-display" id="current-time"></div>
+
+              <div class="meal-indicator" id="current-meal"></div>
+
+              <div class="scanner-instructions">
+                <p>لطفاً بارکد کارت پرسنلی خود را مقابل اسکنر قرار دهید.</p>
+              </div>
+
+              <div id="scanner-container" class="mb-4">
+                <video id="scanner-video" width="100%" height="auto"></video>
+                <div id="scanner-overlay"></div>
+                <div id="scanner-target"></div>
+              </div>
+
+              <div class="text-center mb-3">
+                <div class="input-group mb-3 justify-content-center">
+                  <input
+                    type="text"
+                    id="manual-input"
+                    class="form-control"
+                    style="max-width: 200px"
+                    placeholder="یا شماره پرسنلی را وارد کنید"
+                  />
+                  <button
+                    class="btn btn-primary"
+                    type="button"
+                    id="manual-submit"
+                  >
+                    <i class="fas fa-paper-plane"></i> ارسال
+                  </button>
+                </div>
+              </div>
+
+              <div id="result-container" class="alert alert-success">
+                <div class="text-center mb-3">
+                  <i class="fas fa-check-circle fa-3x text-success"></i>
+                </div>
+                <h4 class="text-center">رزرو تایید شد</h4>
+                <div class="row mt-3">
+                  <div class="col-md-6">
+                    <p>
+                      <strong>شماره پرسنلی:</strong>
+                      <span id="result-employee-id"></span>
+                    </p>
+                    <p><strong>نام:</strong> <span id="result-name"></span></p>
+                  </div>
+                  <div class="col-md-6">
+                    <p>
+                      <strong>تاریخ:</strong> <span id="result-date"></span>
+                    </p>
+                    <p>
+                      <strong>وعده غذایی:</strong>
+                      <span id="result-meal"></span>
+                    </p>
+                  </div>
+                </div>
+                <div class="text-center mt-3">
+                  <a href="#" id="print-token" class="btn btn-primary">
+                    <i class="fas fa-print"></i> چاپ ژتون
+                  </a>
+                </div>
+              </div>
+
+              <div id="error-message"></div>
+            </div>
+            <div class="card-footer text-center py-3">
+              <div class="small">
+                <a href="/admin" class="text-decoration-none"
+                  >ورود به پنل مدیریت</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Custom JS -->
+    <script src="/js/scanner.js"></script>
+  </body>
+</html>
