@@ -24,14 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPage = 1
   const itemsPerPage = 15 // Adjust as needed
 
-  $(".datepicker").persianDatepicker({
-    format: "YYYY/MM/DD",
-    initialValue: false,
-    autoClose: true,
-    onSelect: function () {
-      $(this.model.inputElement).trigger("change")
-    },
-  })
   // --- Functions ---
 
   /**
@@ -76,8 +68,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const employeeId = document.getElementById("employee-filter").value.trim()
     const name = document.getElementById("name-filter").value.trim()
     const department = document.getElementById("department-filter").value.trim()
-    const startDate = document.getElementById("start-date").value
-    const endDate = document.getElementById("end-date").value
+    const startDate = document
+      .getElementById("start-date")
+      .valueAsDate.toLocaleDateString()
+    const endDate = document
+      .getElementById("end-date")
+      .valueAsDate.toLocaleDateString()
     const mealShift = Array.from(
       document.querySelectorAll('input[name="meal-shift"]:checked')
     ).map(e => e.value)
@@ -134,10 +130,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   resetFilterBtn.addEventListener("click", () => {
     filterForm.reset()
-    // Reset date pickers if necessary (flatpickr might need specific reset)
-    document
-      .querySelectorAll(".datepicker")
-      .forEach(dp => dp._flatpickr.clear())
+    // Reset native date inputs
+    document.getElementById("start-date").value = ""
+    document.getElementById("end-date").value = ""
     // Reset radio buttons to default 'all'
     document.getElementById("meal-shift-all").checked = true
     document.getElementById("meal-out-all").checked = true

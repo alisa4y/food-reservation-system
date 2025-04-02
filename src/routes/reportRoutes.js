@@ -1,8 +1,6 @@
 const express = require("express")
 const router = express.Router()
 const Reservation = require("../models/Reservation")
-const Employee = require("../models/Employee")
-const { parsePersianDate } = require("../utils/tools")
 // const { generateExcelReport } = require("../utils/excelGenerator") // Assuming excel generator utility
 const { generatePdfReport } = require("../utils/pdfGenerator") // Assuming pdf generator utility
 
@@ -26,8 +24,8 @@ router.post("/", async (req, res) => {
       employeeId,
       name,
       department,
-      startDate: parsePersianDate(startDate),
-      endDate: parsePersianDate(endDate),
+      startDate: startDate,
+      endDate: endDate,
       mealShift,
       mealOut,
     }

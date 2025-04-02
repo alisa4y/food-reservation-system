@@ -127,40 +127,44 @@ class Reservation {
         FROM reservations r
         JOIN employees e ON r.employee_id = e.employee_id
       `
-      let whereClause = " WHERE 1=1 "
+      const conditions = []
       const params = []
 
       // Employee ID filter
       if (filters.employeeId) {
-        whereClause += " AND e.employee_id = ?"
+        conditions.push("e.employee_id = ?")
         params.push(filters.employeeId)
       }
 
       // Name filter with case-insensitive matching
       if (filters.name) {
-        whereClause +=
-          " OR (e.first_name LIKE ? COLLATE NOCASE OR e.last_name LIKE ? COLLATE NOCASE)"
+        conditions.push(
+          "(e.first_name LIKE ? COLLATE NOCASE OR e.last_name LIKE ? COLLATE NOCASE)"
+        )
         params.push(`%${filters.name}%`, `%${filters.name}%`)
       }
 
       // Department filter with case-insensitive matching
       if (filters.department) {
-        whereClause += " OR e.department LIKE ? COLLATE NOCASE"
+        conditions.push("e.department LIKE ? COLLATE NOCASE")
         params.push(`%${filters.department}%`)
       }
       if (filters.position) {
-        whereClause += " OR e.position LIKE ? COLLATE NOCASE"
+        conditions.push("e.position LIKE ? COLLATE NOCASE")
         params.push(`%${filters.department}%`)
       }
       // date range filter
       if (filters.startDate) {
-        whereClause += " OR r.date >= ?"
+        conditions.push("r.date = ?")
         params.push(filters.startDate)
       }
       if (filters.endDate) {
-        whereClause += " OR r.date <= ?"
+        conditions.push("r.date = ?")
         params.push(filters.endDate)
       }
+
+      let whereClause =
+        conditions.length > 0 ? ` WHERE ${conditions.join(" OR ")}` : ""
 
       const validMealTypes = ["breakfast", "lunch", "dinner"]
 
@@ -467,9 +471,7 @@ class Reservation {
         successCount++
       } catch (err) {
         console.error(
-          `Error importing reservation for ${res.employee_id} on ${new Date(
-            res.date
-          ).toLocaleDateString("fa-IR")}:`,
+          `Error importing reservation for ${res.employee_id} on ${res.date}:`,
           err.message
         )
         // Continue processing remaining reservations

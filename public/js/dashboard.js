@@ -12,8 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "Content-Type": "application/json", // Must be explicitly set
     },
     body: JSON.stringify({
-      startDate: todayDate.toLocaleDateString("fa-IR"),
-      endDate: tomorrow.toLocaleDateString("fa-IR"),
+      startDate: todayDate.toLocaleDateString(),
+      endDate: tomorrow.toLocaleDateString(),
     }),
   })
     .then(response => response.json())
@@ -37,8 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "Content-Type": "application/json", // Must be explicitly set
     },
     body: JSON.stringify({
-      startDate: todayDate.toLocaleDateString("fa-IR"),
-      endDate: day7.toLocaleDateString("fa-IR"),
+      startDate: todayDate.toLocaleDateString(),
+      endDate: day7.toLocaleDateString(),
     }),
   })
     .then(response => response.json())

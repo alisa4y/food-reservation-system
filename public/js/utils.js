@@ -27,16 +27,13 @@ function updateReservationsTable(responseData) {
     )
   } else {
     reservations.forEach(res => {
-      // Assume res.date is already formatted by the server
-      const d = new Date(res.date)
-      const persianDateStr = d.toLocaleDateString("fa-IR") || "نامعتبر" // Use server-provided date or default
       const row = `
                             <tr>
                                 <td>${res.employee_id}</td>
                                 <td>${res.first_name || ""} ${
         res.last_name || ""
       }</td>
-                                <td>${persianDateStr}</td>
+                                <td>${res.date}</td>
                                 <td>${getMealStatusText(res.breakfast)}</td>
                                 <td>${getMealStatusText(res.lunch)}</td>
                                 <td>${getMealStatusText(res.dinner)}</td>

@@ -1,14 +1,4 @@
 $(document).ready(function () {
-  // Initialize Persian datepicker
-  $(".datepicker").persianDatepicker({
-    format: "YYYY/MM/DD",
-    initialValue: false,
-    autoClose: true,
-    onSelect: function () {
-      $(this.model.inputElement).trigger("change")
-    },
-  })
-
   // Load reservations on page load
   loadReservations()
 
@@ -23,9 +13,12 @@ $(document).ready(function () {
     $("#lunch-status").val("0")
     $("#dinner-status").val("0")
 
-    // Set today's date
-    const today = new persianDate()
-    $("#reservation-date").val(today.format("YYYY/MM/DD"))
+    // Set today's date in YYYY-MM-DD format for the date input
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, "0") // Months are 0-indexed
+    const day = String(today.getDate()).padStart(2, "0")
+    $("#reservation-date").val(`${year}-${month}-${day}`)
 
     $("#reservation-modal-label").text("افزودن رزرو")
     $("#reservation-modal").modal("show")
@@ -54,31 +47,10 @@ $(document).ready(function () {
       return
     }
 
-    // Convert Persian date to Milliseconds
-    let dateMilliseconds = null
-    try {
-      const parts = date.split("/")
-      const pDate = new persianDate([
-        parseInt(parts[0]),
-        parseInt(parts[1]),
-        parseInt(parts[2]),
-      ])
-      // Convert to JS Date object first, then get milliseconds
-      const jsDate = pDate.toDate()
-      if (isNaN(jsDate.getTime())) {
-        throw new Error("Invalid Date object created")
-      }
-      dateMilliseconds = jsDate.getTime()
-    } catch (e) {
-      console.error("Error converting Persian date to milliseconds:", e)
-      alert("تاریخ وارد شده نامعتبر است.")
-      return
-    }
-
-    // Prepare data
+    // Prepare data - date is already in YYYY-MM-DD format from the input
     const data = {
       employee_id: employeeId,
-      date: dateMilliseconds, // Send milliseconds
+      date: date, // Send YYYY-MM-DD string, server should handle parsing
       breakfast: breakfast,
       lunch: lunch,
       dinner: dinner,
@@ -141,8 +113,20 @@ $(document).ready(function () {
             $("#employee-id-suffix").val(employeeId)
           }
 
-          // Assume reservation.date is already formatted by the server
-          $("#reservation-date").val(reservation.date || "")
+          // Format the received date (assuming milliseconds or ISO string) to YYYY-MM-DD
+          let formattedDate = ""
+          if (reservation.date) {
+            try {
+              const dateObj = new Date(reservation.date)
+              const year = dateObj.getFullYear()
+              const month = String(dateObj.getMonth() + 1).padStart(2, "0")
+              const day = String(dateObj.getDate()).padStart(2, "0")
+              formattedDate = `${year}-${month}-${day}`
+            } catch (e) {
+              console.error("Error formatting date for edit:", e)
+            }
+          }
+          $("#reservation-date").val(formattedDate)
 
           $("#breakfast-status").val(reservation.breakfast)
           $("#lunch-status").val(reservation.lunch)
@@ -187,7 +171,7 @@ $(document).ready(function () {
 
           const d = new Date(reservation.date)
 
-          const persianDateStr = d.toLocaleDateString("fa-IR") || "نامعتبر"
+          const persianDateStr = d.toLocaleDateString() || "نامعتبر"
           const dayName = getPersianDayOfWeek(d) // Or remove this if day name isn't provided/needed
           $("#view-date").text(persianDateStr)
           $("#view-day").text(dayName) // Keep or remove based on server data
@@ -336,9 +320,14 @@ $(document).ready(function () {
 
   // Filter button click
   $("#filter-btn").on("click", function () {
-    const searchQuery = $("#date-filter").val().trim()
+    let searchQuery = document.getElementById("date-filter")
+
+    if (!searchQuery.valueAsDate) {
+      return loadReservations(1)
+    } else searchQuery = searchQuery.valueAsDate.toLocaleDateString()
+
     if (searchQuery) {
-      fetch("/api/reservations/filter".toString(), {
+      fetch("/api/reservations/search".toString(), {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -382,36 +371,18 @@ $(document).ready(function () {
 
 // Function to load reservations
 function loadReservations(page = 1, limit = 10) {
-  const searchQuery = $("#search-input").val()
-  const dateFilter = $("#date-filter").val()
-
-  let gregorianDateFilter = ""
-  if (dateFilter) {
-    try {
-      const parts = dateFilter.split("/")
-      const persianDateInstance = new persianDate([
-        parseInt(parts[0]),
-        parseInt(parts[1]),
-        parseInt(parts[2]),
-      ])
-      gregorianDateFilter = persianDateInstance
-        .toCalendar("gregorian")
-        .format("YYYY-MM-DD")
-    } catch (e) {
-      console.error("Invalid date filter format")
-      // Optionally clear the filter or show an error
-    }
-  }
+  const searchQuery = $("#search-input").val().trim()
+  const dateFilter = $("#date-filter").val() // Already in YYYY-MM-DD format
 
   // Construct URL with query parameters
   const url = new URL("/api/reservations", window.location.origin)
-  url.searchParams.append("page", page)
-  url.searchParams.append("limit", limit)
+  url.searchParams.append("page", String(page))
+  url.searchParams.append("limit", String(limit))
   if (searchQuery) {
     url.searchParams.append("search", searchQuery)
   }
-  if (gregorianDateFilter) {
-    url.searchParams.append("date", gregorianDateFilter)
+  if (dateFilter) {
+    url.searchParams.append("date", dateFilter) // Use YYYY-MM-DD directly
   }
 
   // Send request using fetch

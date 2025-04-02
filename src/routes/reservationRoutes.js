@@ -6,7 +6,6 @@ const multer = require("multer")
 const upload = multer({ dest: "uploads/" })
 const exceljs = require("exceljs")
 const fs = require("fs")
-const { parsePersianDate } = require("../utils/tools")
 
 // Get all reservations
 router.get("/", async (req, res) => {
@@ -58,8 +57,7 @@ router.get("/employee/:employeeId", async (req, res) => {
 // Create new reservation
 router.post("/", async (req, res) => {
   try {
-    const { employee_id, _date, breakfast, lunch, dinner } = req.body
-    const date = parsePersianDate(_date)
+    const { employee_id, date, breakfast, lunch, dinner } = req.body
     // Validate required fields
     if (!employee_id || !date) {
       return res
@@ -172,11 +170,8 @@ router.delete("/:id", async (req, res) => {
 router.post("/filter", async (req, res) => {
   try {
     const filters = req.body
-    const { startDate, endDate } = filters
     const reservations = await Reservation.searchWithPagination({
       ...filters,
-      startDate: startDate ? parsePersianDate(startDate) : undefined,
-      endDate: endDate ? parsePersianDate(endDate) : undefined,
     })
     res.json({ success: true, data: reservations })
   } catch (error) {
@@ -189,11 +184,8 @@ router.post("/filter", async (req, res) => {
 router.post("/search", async (req, res) => {
   try {
     const filters = req.body
-    const { startDate, endDate } = filters
     const reservations = await Reservation.searchAny({
       ...filters,
-      startDate: startDate ? parsePersianDate(startDate) : undefined,
-      endDate: endDate ? parsePersianDate(endDate) : undefined,
     })
     res.json({ success: true, data: reservations })
   } catch (error) {
@@ -224,7 +216,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
       if (rowNumber > 1) {
         const reservation = {
           employee_id: row.getCell(1).value?.toString().trim(),
-          date: parsePersianDate(row.getCell(2).value),
+          date: row.getCell(2).value,
           breakfast: +(parseInt(row.getCell(3).value) == 1),
           lunch: +(parseInt(row.getCell(4).value) == 1),
           dinner: +(parseInt(row.getCell(5).value) == 1),
