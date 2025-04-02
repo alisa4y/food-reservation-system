@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+<!-- Set primary language if desired (e.g., lang="ar"), but "fa" is okay since both are RTL -->
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>اسکنر بارکد</title>
+    <!-- Updated Title -->
+    <title>ماسح الباركود<br>اسکنر بارکد</title>
     <!-- Bootstrap RTL CSS -->
     <link
       rel="stylesheet"
@@ -17,145 +19,274 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/style.css" />
     <style>
+      /* Optional: Adjust line-height if <br> makes things too spaced out */
+      h3,
+      p,
+      strong,
+      button,
+      .alert,
+      .small a,
+      input::placeholder {
+        line-height: 1.6; /* Adjust as needed */
+      }
       #scanner-container {
         position: relative;
         width: 100%;
-        max-width: 500px;
-        margin: 0 auto;
+        max-width: 500px; /* Or adjust as needed */
+        margin: 20px auto; /* Added top/bottom margin */
+        border: 1px solid #ccc; /* Optional border */
+        background-color: #f0f0f0; /* Background for contrast */
+        overflow: hidden; /* To contain the video */
+        min-height: 250px; /* Ensure it has some height */
       }
+      /* Ensure video fills the container but respects aspect ratio */
+      #scanner-video {
+        display: block; /* Remove extra space below video */
+        width: 100%;
+        height: auto;
+        /* background-color: black; /* Placeholder background */
+      }
+      /* Keep the overlay simple for now */
       #scanner-overlay {
+        /* Removed overlay for simplicity unless needed */
+        /* If re-enabled, ensure it doesn't obscure the video entirely */
+        /* display: none; */
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.3);
+        /* Example: Border only */
+        border: 3px solid red;
         z-index: 10;
       }
+      /* Simplify target - make it less intrusive */
       #scanner-target {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 70%;
-        height: 30%;
+        width: 60%; /* Smaller */
+        height: 40%; /* Adjust aspect ratio */
         transform: translate(-50%, -50%);
-        border: 2px solid #fff;
-        border-radius: 10px;
-        box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        border: 3px solid rgba(255, 255, 255, 0.8); /* White border */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Optional subtle shadow */
         z-index: 20;
+        /* Remove the large box-shadow that hides everything else */
+        /* box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3); */
       }
       #result-container {
         display: none;
         margin-top: 20px;
       }
+      /* Error message styling (ensure it uses html() in JS) */
       #error-message {
         display: none;
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 15px;
-        border-radius: 5px;
         margin-top: 20px;
-        text-align: center;
-        font-weight: bold;
+        /* Default Bootstrap danger alert styles will be applied if class="alert alert-danger" */
       }
       .time-display {
         font-size: 2rem;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 15px; /* Reduced margin */
+        color: #333; /* Darker color */
       }
       .meal-indicator {
-        font-size: 1.2rem;
+        font-size: 1.1rem; /* Slightly smaller */
         text-align: center;
-        margin-bottom: 20px;
-        padding: 10px;
+        margin-bottom: 15px; /* Reduced margin */
+        padding: 8px 12px; /* Adjust padding */
         border-radius: 5px;
+        line-height: 1.5; /* Adjust line height for multi-line */
       }
       .scanner-instructions {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 15px; /* Reduced margin */
+        color: #555; /* Slightly lighter text */
+      }
+      /* Loading Indicator Styling */
+      #loading-indicator {
+        display: none; /* Initially hidden */
+        text-align: center;
+        padding: 20px;
+        font-size: 1.1em;
+        color: #0d6efd; /* Bootstrap primary color */
+      }
+      #loading-indicator .spinner-border {
+        width: 2rem;
+        height: 2rem;
       }
     </style>
   </head>
   <body class="bg-light">
-    <div class="container py-5">
+    <div class="container py-4">
+      <!-- Reduced padding slightly -->
       <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <div class="card shadow-lg border-0 rounded-lg">
-            <div class="card-header bg-primary text-white text-center">
-              <h3 class="font-weight-light my-2">سیستم اسکنر بارکد رزرو غذا</h3>
+        <div class="col-lg-7 col-md-9">
+          <!-- Adjusted column size -->
+          <div class="card shadow-sm border-0 rounded-lg">
+            <!-- Reduced shadow -->
+            <div class="card-header bg-primary text-white text-center py-3">
+              <!-- Adjusted padding -->
+              <!-- Updated Heading -->
+              <h3 class="fw-light my-1">
+                <!-- Use fw-light, reduced margin -->
+                نظام ماسح الباركود لحجز الوجبات<br />
+                سیستم اسکنر بارکد رزرو غذا
+              </h3>
             </div>
-            <div class="card-body">
-              <div class="time-display" id="current-time"></div>
+            <div class="card-body p-4">
+              <!-- Adjusted padding -->
+              <!-- Time and Meal Indicator -->
+              <div class="time-display" id="current-time">--:--:--</div>
+              <div
+                class="meal-indicator bg-secondary text-white"
+                id="current-meal"
+              >
+                الوجبة الحالية:<br />وعده فعلی:<br />--
+              </div>
 
-              <div class="meal-indicator" id="current-meal"></div>
-
+              <!-- Scanner Instructions -->
               <div class="scanner-instructions">
-                <p>لطفاً بارکد کارت پرسنلی خود را مقابل اسکنر قرار دهید.</p>
+                <p>
+                  يرجى وضع باركود بطاقة الموظف أمام الماسح الضوئي.<br />
+                  لطفاً بارکد کارت پرسنلی خود را مقابل اسکنر قرار دهید.
+                </p>
               </div>
 
-              <div id="scanner-container" class="mb-4">
-                <video id="scanner-video" width="100%" height="auto"></video>
-                <div id="scanner-overlay"></div>
-                <div id="scanner-target"></div>
+              <!-- Scanner Area -->
+              <div id="scanner-container" class="mb-3">
+                <!-- Status message area (moved above video) -->
+                <div
+                  id="scanner-status-message"
+                  class="alert"
+                  style="display: none; margin-bottom: 10px"
+                ></div>
+                <!-- Video element -->
+                <div
+                  style="
+                    position: relative;
+                    width: 100%;
+                    max-width: 400px;
+                    margin: auto;
+                    background: #eee;
+                  "
+                >
+                  <!-- Added container -->
+                  <video
+                    id="scanner-video"
+                    style="display: block; width: 100%; height: auto"
+                  ></video>
+                  <!-- Target overlay -->
+                  <div id="scanner-target"></div>
+                </div>
               </div>
 
+              <!-- Manual Input -->
               <div class="text-center mb-3">
-                <div class="input-group mb-3 justify-content-center">
+                <div
+                  class="input-group mb-3 justify-content-center mx-auto"
+                  style="max-width: 350px"
+                >
+                  <!-- Manual Input Field -->
                   <input
                     type="text"
                     id="manual-input"
                     class="form-control"
                     style="max-width: 200px"
-                    placeholder="یا شماره پرسنلی را وارد کنید"
+                    placeholder="أو أدخل رقم الموظف یا شماره پرسنلی را وارد کنید"
+                    aria-label="Employee ID Input"
                   />
+                  <!-- Input tag properly closed -->
+
+                  <!-- Submit Button -->
                   <button
-                    class="btn btn-primary"
+                    class="btn btn-secondary"
                     type="button"
                     id="manual-submit"
                   >
-                    <i class="fas fa-paper-plane"></i> ارسال
+                    <i class="fas fa-paper-plane me-1"></i>
+                    إرسال<br />ارسال
+                    <!-- <br> is fine, <br /> is also acceptable -->
                   </button>
                 </div>
               </div>
 
-              <div id="result-container" class="alert alert-success">
-                <div class="text-center mb-3">
-                  <i class="fas fa-check-circle fa-3x text-success"></i>
+              <!-- Loading Indicator -->
+              <div id="loading-indicator">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
                 </div>
-                <h4 class="text-center">رزرو تایید شد</h4>
+                <p class="mt-2">جار التحميل...<br />در حال بارگذاری...</p>
+              </div>
+
+              <!-- Result Area -->
+              <div
+                id="result-container"
+                class="alert alert-success border-success"
+              >
+                <!-- Added border class -->
+                <div class="text-center mb-2">
+                  <i class="fas fa-check-circle fa-2x text-success"></i>
+                  <!-- Smaller icon -->
+                </div>
+                <h4 class="text-center alert-heading">
+                  <!-- Use alert-heading -->
+                  تم تأكيد الحجز<br />رزرو تایید شد
+                </h4>
+                <hr />
                 <div class="row mt-3">
-                  <div class="col-md-6">
+                  <div class="col-sm-6 mb-2">
+                    <!-- Use col-sm for better stacking -->
                     <p>
-                      <strong>شماره پرسنلی:</strong>
-                      <span id="result-employee-id"></span>
+                      <strong>رقم الموظف:<br />شماره پرسنلی:</strong>
+                      <span id="result-employee-id" class="d-block"></span>
+                      <!-- Display block -->
                     </p>
-                    <p><strong>نام:</strong> <span id="result-name"></span></p>
+                    <p>
+                      <strong>الاسم:<br />نام:</strong>
+                      <span id="result-name" class="d-block"></span>
+                      <!-- Display block -->
+                    </p>
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-sm-6 mb-2">
                     <p>
-                      <strong>تاریخ:</strong> <span id="result-date"></span>
+                      <strong>التاريخ:<br />تاریخ:</strong>
+                      <span id="result-date" class="d-block"></span>
+                      <!-- Display block -->
                     </p>
                     <p>
-                      <strong>وعده غذایی:</strong>
-                      <span id="result-meal"></span>
+                      <strong>الوجبة:<br />وعده غذایی:</strong>
+                      <span id="result-meal" class="d-block"></span>
+                      <!-- Display block -->
                     </p>
                   </div>
                 </div>
                 <div class="text-center mt-3">
-                  <a href="#" id="print-token" class="btn btn-primary">
-                    <i class="fas fa-print"></i> چاپ ژتون
+                  <a href="#" id="print-token" class="btn btn-info text-white">
+                    <!-- Changed color -->
+                    <i class="fas fa-print me-1"></i>
+                    <!-- Added margin -->
+                    طباعة القسيمة<br />چاپ ژتون
                   </a>
                 </div>
               </div>
 
-              <div id="error-message"></div>
+              <!-- Error Message Area -->
+              <!-- The JS will populate this with .html() and add appropriate alert class -->
+              <div id="error-message" class="alert alert-danger" role="alert">
+                <!-- Error content goes here via JS -->
+              </div>
             </div>
-            <div class="card-footer text-center py-3">
+            <!-- End card-body -->
+            <div class="card-footer text-center py-3 bg-light border-top">
+              <!-- Added background and border -->
               <div class="small">
-                <a href="/admin" class="text-decoration-none"
-                  >ورود به پنل مدیریت</a
-                >
+                <a href="/admin" class="text-decoration-none text-secondary">
+                  <!-- Changed color -->
+                  الدخول إلى لوحة الإدارة<br />
+                  ورود به پنل مدیریت
+                </a>
               </div>
             </div>
           </div>
@@ -167,9 +298,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- QR Scanner -->
+    <!-- QR Scanner Library -->
+    <!-- Make sure this path is correct -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- Custom JS -->
+    <!-- Make sure this path is correct -->
     <script src="/js/scanner.js"></script>
   </body>
 </html>

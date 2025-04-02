@@ -1,111 +1,131 @@
 $(document).ready(function () {
   // --- State Variables ---
-  let currentMealType = "" // Store the current meal type globally within the scope
-  let isScannerRunning = false // Track if the scanner is currently active
-  let html5QrCode = null // Initialize scanner variable
+  let currentMealTimeKey = ""
+  let isScannerRunning = false
+  let html5QrCode = null
 
   // --- Initialize Scanner Object ---
-  // We initialize it here but don't start it yet.
   try {
     html5QrCode = new Html5Qrcode("scanner-video")
   } catch (err) {
     console.error("Error initializing Html5Qrcode:", err)
+    // Use .append() as it correctly handles HTML strings
     $("#scanner-container").append(
-      `<div class="alert alert-danger">فشل في تهيئة الماسح الضوئي. قد لا يدعم المتصفح الميزات المطلوبة.</div>` // Arabic: Failed to initialize scanner. Browser might not support required features.
+      `<div class="alert alert-danger">فشل في تهيئة الماسح الضوئي. قد لا يدعم المتصفح الميزات المطلوبة.<br>راه اندازی اسکنر ناموفق بود. ممکن است مرورگر از ویژگی های مورد نیاز پشتیبانی نکند.</div>` // Arabic <br> Persian
     )
-    // Disable manual input too if scanner fails to initialize fundamentally
     $("#manual-input").prop("disabled", true)
     $("#manual-submit").prop("disabled", true)
   }
 
-  // --- Core Functions ---
-
-  // Update current time and meal period, and control scanner state
+  // --- Helper Function for Bilingual Meal Names (with line breaks) ---
+  function getBilingualMealName(mealKeyOrApiType) {
+    const key = mealKeyOrApiType.toLowerCase()
+    switch (key) {
+      case "breakfast":
+      case "فطور":
+        return "فطور<br>صبحانه" // Arabic <br> Persian
+      case "lunch":
+      case "غداء":
+        return "غداء<br>ناهار" // Arabic <br> Persian
+      case "dinner":
+      case "عشاء":
+        return "عشاء<br>شام" // Arabic <br> Persian
+      case "خارج":
+        return "خارج أوقات الوجبات<br>خارج از زمان وعده" // Arabic <br> Persian
+      default:
+        return mealKeyOrApiType // Fallback
+    }
+  }
   function updateTimeAndMeal() {
     const now = new Date()
     const hours = now.getHours()
     const minutes = now.getMinutes()
     const seconds = now.getSeconds()
 
-    // Format time
     const timeString = `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-    $("#current-time").text(timeString)
+    $("#current-time").html(timeString) // Use html is fine
 
-    // Determine current meal period
-    let mealType = ""
+    let mealKey = ""
+    // We don't need mealDisplay here anymore, we'll get names from the helper object
     let mealClass = ""
-    let isMealTime = false // Flag to indicate if it's currently a meal time
+    let isMealTime = false
 
-    // Define Meal Times (adjust as needed)
-    const breakfastStart = 7 * 60 // 7:00 AM in minutes
-    const breakfastEnd = 8 * 60 + 30 // 8:30 AM in minutes
-    const lunchStart = 12 * 60 // 12:00 PM
-    const lunchEnd = 15 * 60 // 3:00 PM (15:00)
-    const dinnerStart = 19 * 60 // 7:00 PM (19:00)
-    const dinnerEnd = 21 * 60 + 30 // 9:30 PM (21:30)
+    // --- Define Meal Times (as before) ---
+    const breakfastStart = 7 * 60
+    const breakfastEnd = 8 * 60 + 30
+    const lunchStart = 12 * 60
+    const lunchEnd = 15 * 60
+    const dinnerStart = 19 * 60
+    const dinnerEnd = 21 * 60 + 30
     const currentTimeInMinutes = hours * 60 + minutes
 
+    // --- Determine Meal Key and Class (as before) ---
     if (
       currentTimeInMinutes >= breakfastStart &&
       currentTimeInMinutes < breakfastEnd
     ) {
-      mealType = "فطور" // Breakfast
+      mealKey = "فطور"
       mealClass = "bg-info text-white"
       isMealTime = true
     } else if (
       currentTimeInMinutes >= lunchStart &&
       currentTimeInMinutes < lunchEnd
     ) {
-      mealType = "غداء" // Lunch
+      mealKey = "غداء"
       mealClass = "bg-success text-white"
       isMealTime = true
     } else if (
       currentTimeInMinutes >= dinnerStart &&
       currentTimeInMinutes < dinnerEnd
     ) {
-      mealType = "عشاء" // Dinner
+      mealKey = "عشاء"
       mealClass = "bg-primary text-white"
       isMealTime = true
     } else {
-      mealType = "خارج أوقات الوجبات" // Outside meal times
+      mealKey = "خارج"
       mealClass = "bg-warning"
       isMealTime = false
     }
 
-    // Update global meal type
-    currentMealType = mealType
+    currentMealTimeKey = mealKey // Keep the key for logical checks
 
-    // Update UI for meal indicator
+    // --- Get Separate Meal Names ---
+    const mealNames = getMealNames(mealKey) // Call the updated helper
+
+    // --- Construct the Desired HTML String ---
+    // Line 1: Arabic Label + Arabic Name
+    // Line 2: Persian Label + Persian Name
+    const mealIndicatorHtml = `الوجبة الحالية: ${mealNames.arabic}<br>وعده فعلی: ${mealNames.persian}`
+
+    // --- Update UI for meal indicator ---
     $("#current-meal")
-      .text(`الوجبة الحالية: ${mealType}`) // Arabic: Current Meal
-      .attr("class", `meal-indicator ${mealClass}`)
+      .html(mealIndicatorHtml) // Set the new HTML format
+      .attr("class", `meal-indicator ${mealClass}`) // Set the background/text class
 
-    // --- Control Scanner and Manual Input Based on Meal Time ---
+    // --- Control Scanner and Manual Input Based on Meal Time (logic remains the same) ---
     if (html5QrCode) {
-      // Only proceed if scanner was initialized
       if (isMealTime) {
-        // It's meal time - enable scanning and manual input
         $("#manual-input").prop("disabled", false)
         $("#manual-submit").prop("disabled", false)
-        $("#scanner-status-message").hide() // Hide any 'disabled' message
+        $("#scanner-status-message").hide()
 
-        // Start scanner only if it's not already running
         if (!isScannerRunning) {
           startScanner()
         }
       } else {
-        // It's *not* meal time - disable scanning and manual input
         $("#manual-input").prop("disabled", true)
         $("#manual-submit").prop("disabled", true)
+        // Use .html() for status message (as it was correct before)
         $("#scanner-status-message")
-          .text("المسح غير متاح خارج أوقات الوجبات") // Arabic: Scanning not available outside meal times
-          .removeClass("alert-danger alert-warning alert-info") // Remove other alerts
-          .addClass("alert-warning") // Add warning style
+          .html(
+            "المسح غير متاح خارج أوقات الوجبات<br>اسکن خارج از زمان وعده های غذایی در دسترس نیست"
+          ) // Arabic <br> Persian
+          .removeClass("alert-danger alert-warning alert-info")
+          .addClass("alert-warning")
           .show()
 
-        // Stop scanner only if it's currently running
         if (isScannerRunning) {
           stopScanner()
         }
@@ -113,14 +133,58 @@ $(document).ready(function () {
     }
   }
 
+  function showSuccess(data) {
+    // ... (employee id, name, date handling as before) ...
+
+    // Get meal names using the new helper
+    const mealNames = getMealNames(data.meal_type)
+
+    // Display them separately or combined as needed in the results area
+    // Example: Display combined with <br> in the results table
+    // $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`);
+    // Or display only one, or display them in different elements if your HTML structure changes
+
+    // FOR NOW, let's keep the combined <br> format in the success result area
+    // as the request was specifically for the #current-meal indicator.
+    // If you want the success result table to also follow the "Label: Name" format,
+    // you'd update the HTML structure and the JS here.
+    $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`)
+
+    // ... (token handling and showing container as before) ...
+    $("#result-employee-id").text(data.employee.employee_id)
+    $("#result-name").text(
+      `${data.employee.first_name} ${data.employee.last_name}`
+    )
+    $("#result-date").text(
+      data.reservation_date
+        ? new Date(data.reservation_date).toLocaleDateString("ar-SA")
+        : new Date().toLocaleDateString("ar-SA")
+    )
+
+    const tokenUrl = data.reservation?.token_pdf
+    if (tokenUrl) {
+      $("#print-token").attr("href", tokenUrl).show()
+    } else {
+      $("#print-token").attr("href", "#").hide()
+    }
+
+    $("#error-message").hide()
+    $("#result-container")
+      .removeClass("border-danger")
+      .addClass("border-success")
+      .show()
+  }
+
+  // --- Core Functions ---
+
   // --- Scanner Control Functions ---
   const config = { fps: 10, qrbox: { width: 250, height: 150 } }
 
   function startScanner() {
-    if (!html5QrCode) return // Safety check
+    if (!html5QrCode) return
 
     console.log("Attempting to start scanner...")
-    $("#scanner-video").show() // Make sure video element is visible
+    $("#scanner-video").show()
     html5QrCode
       .start(
         { facingMode: "environment" },
@@ -131,25 +195,25 @@ $(document).ready(function () {
       .then(() => {
         console.log("Scanner started successfully.")
         isScannerRunning = true
-        $("#scanner-status-message").hide() // Hide any previous status
+        $("#scanner-status-message").hide()
       })
       .catch(err => {
         console.error("Error starting scanner:", err)
-        isScannerRunning = false // Ensure state is correct
-        $("#scanner-video").hide() // Hide video element if start failed
+        isScannerRunning = false
+        $("#scanner-video").hide()
+        // Use .html() to render the <br>
         $("#scanner-status-message")
-          .text("لا يمكن بدء تشغيل الكاميرا. تحقق من الأذونات.") // Arabic: Cannot start camera. Check permissions.
-          .removeClass("alert-warning alert-info") // Remove other alerts
-          .addClass("alert-danger") // Use danger style for error
+          .html(
+            "لا يمكن بدء تشغيل الكاميرا. تحقق من الأذونات.<br>نمی‌توان دوربین را فعال کرد. مجوزها را بررسی کنید."
+          ) // Arabic <br> Persian
+          .removeClass("alert-warning alert-info")
+          .addClass("alert-danger")
           .show()
-        // Optionally disable manual input if camera is fundamentally broken
-        // $("#manual-input").prop("disabled", true);
-        // $("#manual-submit").prop("disabled", true);
       })
   }
 
   function stopScanner() {
-    if (!html5QrCode || !isScannerRunning) return // Only stop if initialized and running
+    if (!html5QrCode || !isScannerRunning) return
 
     console.log("Attempting to stop scanner...")
     html5QrCode
@@ -157,19 +221,18 @@ $(document).ready(function () {
       .then(() => {
         console.log("Scanner stopped successfully.")
         isScannerRunning = false
-        $("#scanner-video").hide() // Hide video element when stopped
-        // Message indicating scanning is off is handled by updateTimeAndMeal
+        $("#scanner-video").hide()
       })
       .catch(err => {
-        // This might happen if stop is called before start finishes, etc.
         console.error("Error stopping scanner:", err)
-        // Even if stopping failed, we assume it's not usable
         isScannerRunning = false
         $("#scanner-video").hide()
-        // Update status message just in case
-        if (currentMealType === "خارج أوقات الوجبات") {
+        if (currentMealTimeKey === "خارج") {
+          // Use .html() to render the <br>
           $("#scanner-status-message")
-            .text("المسح غير متاح خارج أوقات الوجبات")
+            .html(
+              "المسح غير متاح خارج أوقات الوجبات<br>اسکن خارج از زمان وعده های غذایی در دسترس نیست"
+            ) // Arabic <br> Persian
             .removeClass("alert-danger alert-info")
             .addClass("alert-warning")
             .show()
@@ -178,31 +241,29 @@ $(document).ready(function () {
   }
 
   // --- Event Handlers ---
-
-  // Handle successful scan
   function onScanSuccess(decodedText) {
-    if (!isScannerRunning) return // Should not happen if logic is correct, but good failsafe
+    if (!isScannerRunning) return
 
     console.log(`Scan successful: ${decodedText}`)
-    // Temporarily pause scanner to process result and prevent multiple scans
-    // Using pause/resume might be smoother than stop/start here
-    html5QrCode.pause(true) // true indicates viewfinder should freeze
-
-    // Process the scanned barcode (no need to check meal time here anymore)
+    if (html5QrCode && isScannerRunning) {
+      try {
+        html5QrCode.pause(true)
+      } catch (e) {
+        console.warn("Could not pause scanner, might already be stopped:", e)
+      }
+    }
     processEmployeeId(decodedText)
   }
 
-  // Optional: Handle scan failures (e.g., QR code not found in frame)
   function onScanFailure(error) {
     // console.warn(`QR code scan failed: ${error}`);
-    // No action needed usually, the scanner keeps trying
   }
 
-  // Handle manual input submission
   $("#manual-submit").on("click", function () {
-    // Double-check if it's meal time (though button should be disabled)
-    if (currentMealType === "خارج أوقات الوجبات") {
-      showError("لا يمكن الإدخال اليدوي خارج أوقات الوجبات.") // Arabic: Manual input not allowed outside meal times.
+    if (currentMealTimeKey === "خارج") {
+      showError(
+        "لا يمكن الإدخال اليدوي خارج أوقات الوجبات.<br>ورود دستی خارج از زمان وعده غذایی مجاز نیست."
+      ) // Arabic <br> Persian
       return
     }
 
@@ -210,18 +271,15 @@ $(document).ready(function () {
     if (employeeId) {
       processEmployeeId(employeeId)
     } else {
-      showError("يرجى إدخال رقم الموظف.") // Arabic: Please enter employee ID.
+      showError("يرجى إدخال رقم الموظف.<br>لطفا شماره کارمند را وارد کنید.") // Arabic <br> Persian
     }
   })
 
-  // Process employee ID (from scan or manual input)
   function processEmployeeId(employeeId) {
-    // Clear previous results and errors
     $("#result-container").hide()
     $("#error-message").hide()
-    $("#loading-indicator").show() // Show loading indicator
+    $("#loading-indicator").show()
 
-    // Call API to check reservation using fetch
     fetch(`/api/reservations/check-active/${employeeId}`, {
       method: "GET",
       headers: {
@@ -230,179 +288,144 @@ $(document).ready(function () {
     })
       .then(response => {
         if (!response.ok) {
-          // Handle HTTP errors like 404 more specifically
           if (response.status === 404) {
-            // Try to parse potential JSON error message from backend
             return response
               .json()
               .then(errData => {
                 throw new Error(
-                  errData.message || "لم يتم العثور على موظف بهذا الرقم."
-                ) // Arabic: Employee with this ID not found.
+                  errData.message ||
+                    "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد." // Arabic <br> Persian
+                )
               })
               .catch(() => {
-                // If parsing JSON fails, use a generic 404 message
-                throw new Error("لم يتم العثور على موظف بهذا الرقم.") // Arabic: Employee with this ID not found.
+                throw new Error(
+                  "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد."
+                ) // Arabic <br> Persian
               })
           }
-          // Throw an error for other non-OK responses to be caught by .catch
           return response.json().then(errData => {
             throw new Error(
-              errData.message || `خطأ في الخادم: ${response.status}` // Arabic: Server error
+              errData.message ||
+                `خطأ في الخادم: ${response.status}<br>خطا در سرور: ${response.status}` // Arabic <br> Persian
             )
           })
         }
-        return response.json() // Parse JSON body
+        return response.json()
       })
       .then(data => {
-        // Process the successful response data
         if (data.success && data.active) {
-          // Check if the reservation meal type matches the *current* meal type
-          // (e.g., prevent using a lunch reservation during breakfast time)
-          const reservationMeal = data.data.meal_type.toLowerCase() // e.g., 'lunch'
-          const expectedMeal =
-            currentMealType === "فطور"
-              ? "breakfast"
-              : currentMealType === "غداء"
-              ? "lunch"
-              : currentMealType === "عشاء"
-              ? "dinner"
-              : null
+          const reservationMealApiType = data.data.meal_type.toLowerCase()
+          let expectedMealApiType = null
 
-          if (expectedMeal && reservationMeal === expectedMeal) {
+          if (currentMealTimeKey === "فطور") expectedMealApiType = "breakfast"
+          else if (currentMealTimeKey === "غداء") expectedMealApiType = "lunch"
+          else if (currentMealTimeKey === "عشاء") expectedMealApiType = "dinner"
+
+          if (
+            expectedMealApiType &&
+            reservationMealApiType === expectedMealApiType
+          ) {
             showSuccess(data.data)
           } else {
-            const mealArabic =
-              reservationMeal === "breakfast"
-                ? "الفطور"
-                : reservationMeal === "lunch"
-                ? "الغداء"
-                : "العشاء"
-            const currentMealArabic = currentMealType // Already in Arabic
+            const reservationMealDisplay = getBilingualMealName(
+              reservationMealApiType
+            )
+            const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
             showError(
-              `الحجز الموجود (${mealArabic}) لا يتطابق مع وقت الوجبة الحالي (${currentMealArabic}).`
-            ) // Arabic: Existing reservation (Meal) does not match current meal time (Current Meal).
+              `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
+            )
           }
         } else if (data.success && !data.active) {
-          // Reservation found but not active for the current meal time determined by the API
           const employeeName = data.data.employee
             ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
-            : `الموظف ${employeeId}` // Use name if available
-          const mealArabic =
-            data.data.meal_type === "breakfast"
-              ? "الفطور"
-              : data.data.meal_type === "lunch"
-              ? "الغداء"
-              : "العشاء"
+            : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
+          const mealDisplayBilingual = getBilingualMealName(data.data.meal_type)
           showError(
-            `لا يوجد حجز نشط لـ ${employeeName} في وجبة ${mealArabic} لهذا اليوم.`
-          ) // Arabic: No active reservation found for [Name] for [Meal] today.
+            `لا يوجد حجز نشط لـ ${employeeName} في وجبة ${mealDisplayBilingual} لهذا اليوم.<br>رزرو فعالی برای ${employeeName} در وعده ${mealDisplayBilingual} امروز وجود ندارد.` // Arabic <br> Persian
+          )
         } else {
-          // API call was successful but indicated failure logically
-          showError(data.message || "خطأ في التحقق من الحجز.") // Arabic: Error checking reservation.
+          showError(
+            data.message || "خطأ في التحقق من الحجز.<br>خطا در بررسی رزرو."
+          ) // Arabic <br> Persian
         }
       })
       .catch(error => {
-        // Handle fetch errors (network issues) and errors thrown from .then blocks
         console.error("Fetch error:", error)
-        showError(error.message || "خطأ في الاتصال بالخادم.") // Arabic: Error connecting to server.
+        showError(
+          error.message || "خطأ في الاتصال بالخادم.<br>خطا در اتصال به سرور."
+        ) // Arabic <br> Persian
       })
       .finally(() => {
-        // This block executes regardless of success or failure
-        $("#loading-indicator").hide() // Hide loading indicator
-        // Resume scanner after a delay, but only if it should be running
+        $("#loading-indicator").hide()
         setTimeout(() => {
-          if (html5QrCode && isScannerRunning) {
-            // Check if it should be running
+          if (
+            html5QrCode &&
+            isScannerRunning &&
+            currentMealTimeKey !== "خارج"
+          ) {
             try {
               html5QrCode.resume()
               console.log("Scanner resumed.")
             } catch (e) {
               console.error("Error resuming scanner:", e)
-              // Maybe try to restart if resume fails? Or just log it.
             }
+          } else {
+            console.log(
+              "Scanner not resumed (outside meal time or was stopped)."
+            )
           }
-          $("#manual-input").val("") // Clear manual input
-        }, 3000) // 3 second delay
+          $("#manual-input").val("")
+        }, 3000)
       })
   }
 
-  // Show success result
-  function showSuccess(data) {
-    $("#result-employee-id").text(data.employee.employee_id)
-    $("#result-name").text(
-      `${data.employee.first_name} ${data.employee.last_name}`
-    )
-    // Use API date if available, otherwise current date
-    $("#result-date").text(
-      data.reservation_date
-        ? new Date(data.reservation_date).toLocaleDateString("ar-SA")
-        : new Date().toLocaleDateString("ar-SA")
-    ) // Arabic locale
-    $("#result-meal").text(
-      data.meal_type === "breakfast"
-        ? "فطور" // Breakfast
-        : data.meal_type === "lunch"
-        ? "غداء" // Lunch
-        : "عشاء" // Dinner
-    )
-
-    // Set token URL - ensure it exists
-    const tokenUrl = data.reservation?.token_pdf // Use optional chaining
-    if (tokenUrl) {
-      $("#print-token").attr("href", tokenUrl).show()
-    } else {
-      $("#print-token").attr("href", "#").hide() // Hide button if no URL
-    }
-
-    // Show result container and hide error
-    $("#error-message").hide()
-    $("#result-container")
-      .removeClass("border-danger")
-      .addClass("border-success")
-      .show() // Use border color for visual cue
-  }
-
-  // Show error message
+  // Show error message - Use .html() to render <br> in the message
   function showError(message) {
-    $("#error-message").text(message).show()
-    $("#result-container").hide() // Hide success container on error
-
-    // Optionally add a red border to the result area placeholder
-    //$("#result-container").removeClass('border-success').addClass('border-danger').show(); // Show container with error indication
-
-    // No automatic hide, let the user see the error until next scan/input
-    /* setTimeout(() => {
-      $("#error-message").hide();
-    }, 3000); */
+    // IMPORTANT: Use .html() here to render the <br> tags correctly
+    $("#error-message").html(message).show()
+    $("#result-container").hide()
   }
 
   // Handle print token button
   $("#print-token").on("click", function (e) {
     const tokenUrl = $(this).attr("href")
     if (!tokenUrl || tokenUrl === "#") {
-      e.preventDefault() // Prevent navigating to '#'
-      showError("ملف القسيمة غير متوفر.") // Arabic: Token file not available.
-    } else {
-      // Allow default behavior (opening link) or open in new tab:
-      // window.open(tokenUrl, '_blank');
-      // e.preventDefault(); // Prevent default if using window.open
+      e.preventDefault()
+      showError("ملف القسيمة غير متوفر.<br>فایل رسید در دسترس نیست.") // Arabic <br> Persian
     }
   })
 
   // --- Initial Setup ---
-  // Add placeholders for status messages and loading indicator in your HTML:
-  // e.g., before <div id="scanner-video">...</div>
-  // <div id="scanner-status-message" class="alert" style="display: none;"></div>
-  // e.g., somewhere appropriate
-  // <div id="loading-indicator" style="display: none;">جار التحميل...</div> // Arabic: Loading...
+  // Make sure your HTML placeholders use <br> if needed:
+  // e.g., <div id="loading-indicator" style="display: none;">جار التحميل...<br>در حال بارگذاری...</div> <!-- Arabic <br> Persian -->
 
-  updateTimeAndMeal() // Initial call to set time, meal, and initial scanner state
-  setInterval(updateTimeAndMeal, 1000) // Update time and check scanner state every second
+  updateTimeAndMeal()
+  setInterval(updateTimeAndMeal, 1000)
 
-  // Hide result container initially
   $("#result-container").hide()
   $("#error-message").hide()
-  $("#scanner-video").hide() // Hide video until scanner starts
-  $("#loading-indicator").hide() // Hide loading indicator
+  $("#scanner-video").hide()
+  $("#loading-indicator").hide()
 }) // End document ready
+// --- Helper Function for Meal Names (returns object) ---
+// Renamed for clarity, now returns an object with separate language names
+function getMealNames(mealKeyOrApiType) {
+  const key = mealKeyOrApiType.toLowerCase() // Ensure consistency
+  switch (key) {
+    case "breakfast":
+    case "فطور": // Match our internal key
+      return { arabic: "فطور", persian: "صبحانه" }
+    case "lunch":
+    case "غداء": // Match our internal key
+      return { arabic: "غداء", persian: "ناهار" }
+    case "dinner":
+    case "عشاء": // Match our internal key
+      return { arabic: "عشاء", persian: "شام" }
+    case "خارج": // Match our internal key
+      // For "outside", return the descriptive phrase for both
+      return { arabic: "خارج أوقات الوجبات", persian: "خارج از زمان وعده" }
+    default:
+      // Fallback if somehow an unknown type is passed
+      return { arabic: mealKeyOrApiType, persian: mealKeyOrApiType }
+  }
+}
