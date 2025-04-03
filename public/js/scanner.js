@@ -154,8 +154,8 @@ $(document).ready(function () {
     )
     $("#result-date").text(
       data.reservation_date
-        ? new Date(data.reservation_date).toLocaleDateString("ar-SA")
-        : new Date().toLocaleDateString("ar-SA")
+        ? new Date(data.reservation_date).toLocaleDateString()
+        : new Date().toLocaleDateString()
     )
     const base64String = data.reservation?.token_pdf
     if (base64String) {
@@ -175,7 +175,8 @@ $(document).ready(function () {
       // --- Options for Printing/Displaying ---
 
       // Option A: Open in a new tab (browser PDF viewer handles printing)
-      // window.open(objectUrl, "_blank")
+      window.open(objectUrl, "_blank")
+      return
       // Option B: Create a link and simulate click for download
 
       const link = document.createElement("a")
@@ -210,9 +211,9 @@ $(document).ready(function () {
         } catch (e) {
           console.error("Kiosk printing failed:", e)
           // Provide fallback or error message if necessary
-          alert(
-            "Printing failed. Please check printer connection and Chrome kiosk settings."
-          )
+          // alert(
+          //   "Printing failed. Please check printer connection and Chrome kiosk settings."
+          // )
           // Clean up even on error
           setTimeout(() => {
             try {
@@ -224,7 +225,7 @@ $(document).ready(function () {
       }
       iframe.onerror = err => {
         console.error("Failed to load PDF into iframe:", err)
-        alert("Failed to load PDF for printing.")
+        // alert("Failed to load PDF for printing.")
         URL.revokeObjectURL(objectUrl)
       }
       document.body.appendChild(iframe)
