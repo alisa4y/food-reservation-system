@@ -132,6 +132,7 @@ async function generateMealToken(employeeData, mealType, reservationId) {
       currentY += 5
       doc.rect(margin, currentY, effectiveWidth, 25).stroke()
       const reservationText = `معرف القسيمة: ${reservationId
+        .toString()
         .split("")
         .reverse()
         .join("")}`
