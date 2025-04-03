@@ -100,7 +100,7 @@ async function addingData4test() {
       position: "مسئول خدمات",
     },
   ]
-
+  await runQuery("DELETE FROM employees")
   for (const emp of employees) {
     try {
       await runQuery(

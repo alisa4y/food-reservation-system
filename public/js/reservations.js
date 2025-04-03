@@ -31,7 +31,9 @@ $(document).ready(function () {
     const employeeIdPrefix = $("#employee-id-prefix").val()
     const employeeIdSuffix = $("#employee-id-suffix").val()
     const employeeId = employeeIdPrefix + employeeIdSuffix
-    const date = $("#reservation-date").val()
+    const date = document
+      .getElementById("reservation-date")
+      .valueAsDate.toLocaleDateString()
     const breakfast = parseInt($("#breakfast-status").val())
     const lunch = parseInt($("#lunch-status").val())
     const dinner = parseInt($("#dinner-status").val())
