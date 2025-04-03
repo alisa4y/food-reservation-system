@@ -6,6 +6,7 @@ const multer = require("multer")
 const upload = multer({ dest: "uploads/" })
 const exceljs = require("exceljs")
 const fs = require("fs")
+const { generateMealToken } = require("../utils/pdfGenerator")
 
 // Get all reservations
 router.get("/", async (req, res) => {
@@ -270,7 +271,13 @@ router.get("/check-active/:employeeId", async (req, res) => {
     const result = await Reservation.checkActiveReservation(employeeId)
 
     if (result.active) {
-      res.json({
+      // Generate token PDF
+      const token = await generateMealToken(
+        result.reservation,
+        result.mealType,
+        result.reservation.id
+      )
+      return res.json({
         success: true,
         active: true,
         data: {
@@ -278,26 +285,40 @@ router.get("/check-active/:employeeId", async (req, res) => {
             employee_id: employee.employee_id,
             first_name: employee.first_name,
             last_name: employee.last_name,
-            is_guest: employee.is_guest === 1,
+            is_guest: employee.is_guest,
           },
           meal_type: result.mealType,
-          // Format date in the nested reservation object
-          reservation: result.reservation,
+          reservation: {
+            ...result.reservation,
+            token_pdf: token.toString("base64"),
+          },
         },
       })
     } else {
-      res.json({
+      let message = result.message
+      if (result.consumed) {
+        message = `این وعده غذایی (${
+          result.mealType === "breakfast"
+            ? "صبحانه"
+            : result.mealType === "lunch"
+            ? "ناهار"
+            : "شام"
+        }) قبلاً مصرف شده و ژتون آن چاپ شده است.`
+      }
+
+      return res.json({
         success: true,
         active: false,
-        message: result.message,
+        consumed: result.consumed || false,
         data: {
           employee: {
             employee_id: employee.employee_id,
             first_name: employee.first_name,
             last_name: employee.last_name,
-            is_guest: employee.is_guest === 1,
+            is_guest: employee.is_guest,
           },
           meal_type: result.mealType,
+          message: message,
         },
       })
     }

@@ -141,11 +141,11 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   // --- Export/Print Buttons (Placeholder - requires backend implementation) ---
-  // document.getElementById("export-excel-btn")?.addEventListener("click", () => {
-  //   const filters = getFilters()
-  //   const params = new URLSearchParams(filters)
-  //   window.location.href = `/api/reports/export/excel?${params.toString()}`
-  // })
+  document.getElementById("export-excel-btn")?.addEventListener("click", () => {
+    const filters = getFilters()
+    const params = new URLSearchParams(filters)
+    window.location.href = `/api/reports/export/excel?${params.toString()}`
+  })
 
   document.getElementById("print-report-btn")?.addEventListener("click", () => {
     // Option 1: Print current view (simple)

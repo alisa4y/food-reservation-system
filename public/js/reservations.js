@@ -296,7 +296,7 @@ $(document).ready(function () {
         .then(response => response.json())
         .then(responseData => {
           if (responseData.success) {
-            updateReservationsTable(responseData)
+            updateReservationsTable(responseData, true)
           } else {
             alert(responseData.message || "خطا در جستجو.")
           }
@@ -341,7 +341,7 @@ $(document).ready(function () {
         .then(response => response.json())
         .then(responseData => {
           if (responseData.success) {
-            updateReservationsTable(responseData)
+            updateReservationsTable(responseData, true)
           } else {
             alert(responseData.message || "خطا در جستجو.")
           }
@@ -395,7 +395,7 @@ function loadReservations(page = 1, limit = 10) {
     .then(response => response.json())
     .then(responseData => {
       if (responseData.success) {
-        updateReservationsTable(responseData)
+        updateReservationsTable(responseData, true)
       } else {
         alert(responseData.message || "خطا در بارگذاری رزروها.")
         $("#reservations-table-body")

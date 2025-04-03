@@ -14,7 +14,10 @@ class Employee {
   // Get employee by ID
   static async getById(employeeId) {
     try {
-      return await getRow("SELECT * FROM employees WHERE id = ?", [employeeId])
+      return await getRow(
+        "SELECT * FROM employees WHERE id = ? OR employee_id = ?",
+        [employeeId, employeeId]
+      )
     } catch (error) {
       console.error("Error getting employee by ID:", error)
       throw error

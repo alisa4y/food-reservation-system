@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const Reservation = require("../models/Reservation")
-// const { generateExcelReport } = require("../utils/excelGenerator") // Assuming excel generator utility
+const { generateExcelReport } = require("../utils/excelGenerator") // Assuming excel generator utility
 const { generatePdfReport } = require("../utils/pdfGenerator") // Assuming pdf generator utility
 
 // POST /api/reports - Fetch filtered and paginated report data with summary
@@ -98,39 +98,39 @@ router.post("/", async (req, res) => {
 })
 
 // GET /api/reports/export/excel - Export filtered data to Excel
-// router.get("/export/excel", async (req, res) => {
-//   try {
-//     const filters = req.query // Reuse filters from query
-//     // Fetch ALL matching data (no pagination for export)
-//     const { reservations } = await Reservation.searchWithPagination(filters, {
-//       limit: null,
-//       page: null,
-//     }) // Assuming limit: null fetches all
+router.get("/export/excel", async (req, res) => {
+  try {
+    const filters = req.body
+    // Fetch ALL matching data (no pagination for export)
+    const { reservations } = await Reservation.searchWithPagination(filters, {
+      limit: null,
+      page: null,
+    }) // Assuming limit: null fetches all
 
-//     if (!reservations || reservations.length === 0) {
-//       return res.status(404).send("No data found for the selected filters.")
-//     }
+    if (!reservations || reservations.length === 0) {
+      return res.status(404).send("No data found for the selected filters.")
+    }
 
-//     const excelBuffer = await generateExcelReport(reservations) // Implement this utility
+    const excelBuffer = await generateExcelReport(reservations) // Implement this utility
 
-//     res.setHeader(
-//       "Content-Type",
-//       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-//     )
-//     res.setHeader(
-//       "Content-Disposition",
-//       `attachment; filename="food_report_${
-//         new Date().toISOString().split("T")[0]
-//       }.xlsx"`
-//     )
-//     res.send(excelBuffer)
-//   } catch (error) {
-//     console.error("Error exporting Excel report:", error)
-//     res
-//       .status(500)
-//       .send("Failed to export report to Excel. Error: " + error.message)
-//   }
-// })
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="food_report_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx"`
+    )
+    res.send(excelBuffer)
+  } catch (error) {
+    console.error("Error exporting Excel report:", error)
+    res
+      .status(500)
+      .send("Failed to export report to Excel. Error: " + error.message)
+  }
+})
 
 // GET /api/reports/print - Generate a printable PDF report
 router.get("/print", async (req, res) => {

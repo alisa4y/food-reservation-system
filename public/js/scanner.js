@@ -36,6 +36,11 @@ $(document).ready(function () {
         return mealKeyOrApiType // Fallback
     }
   }
+
+  let mealKey = ""
+  let mealClass = ""
+  let isMealTime = false
+
   function updateTimeAndMeal() {
     const now = new Date()
     const hours = now.getHours()
@@ -47,47 +52,7 @@ $(document).ready(function () {
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
     $("#current-time").html(timeString) // Use html is fine
 
-    let mealKey = ""
-    // We don't need mealDisplay here anymore, we'll get names from the helper object
-    let mealClass = ""
-    let isMealTime = false
-
-    // --- Define Meal Times (as before) ---
-    const breakfastStart = 7 * 60
-    const breakfastEnd = 8 * 60 + 30
-    const lunchStart = 12 * 60
-    const lunchEnd = 15 * 60
-    const dinnerStart = 19 * 60
-    const dinnerEnd = 21 * 60 + 30
-    const currentTimeInMinutes = hours * 60 + minutes
-
-    // --- Determine Meal Key and Class (as before) ---
-    if (
-      currentTimeInMinutes >= breakfastStart &&
-      currentTimeInMinutes < breakfastEnd
-    ) {
-      mealKey = "فطور"
-      mealClass = "bg-info text-white"
-      isMealTime = true
-    } else if (
-      currentTimeInMinutes >= lunchStart &&
-      currentTimeInMinutes < lunchEnd
-    ) {
-      mealKey = "غداء"
-      mealClass = "bg-success text-white"
-      isMealTime = true
-    } else if (
-      currentTimeInMinutes >= dinnerStart &&
-      currentTimeInMinutes < dinnerEnd
-    ) {
-      mealKey = "عشاء"
-      mealClass = "bg-primary text-white"
-      isMealTime = true
-    } else {
-      mealKey = "خارج"
-      mealClass = "bg-warning"
-      isMealTime = false
-    }
+    setCurrentMeal()
 
     currentMealTimeKey = mealKey // Keep the key for logical checks
 
@@ -110,7 +75,6 @@ $(document).ready(function () {
         $("#manual-input").prop("disabled", false)
         $("#manual-submit").prop("disabled", false)
         $("#scanner-status-message").hide()
-
         if (!isScannerRunning) {
           startScanner()
         }
@@ -132,22 +96,55 @@ $(document).ready(function () {
       }
     }
   }
+  const breakfastStart = 7 * 60
+  const breakfastEnd = 8 * 60 + 30
+  const lunchStart = 12 * 60
+  const lunchEnd = 15 * 60
+  const dinnerStart = 19 * 60
+  const dinnerEnd = 21 * 60 + 30
 
+  function setCurrentMeal() {
+    const now = new Date()
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+
+    // --- Define Meal Times (as before) ---
+    const currentTimeInMinutes = hours * 60 + minutes
+
+    // --- Determine Meal Key and Class (as before) ---
+    if (
+      currentTimeInMinutes >= breakfastStart &&
+      currentTimeInMinutes < breakfastEnd
+    ) {
+      mealKey = "breakfast"
+      mealClass = "bg-info text-white"
+      isMealTime = true
+    } else if (
+      currentTimeInMinutes >= lunchStart &&
+      currentTimeInMinutes < lunchEnd
+    ) {
+      mealKey = "lunch"
+      mealClass = "bg-success text-white"
+      isMealTime = true
+    } else if (
+      currentTimeInMinutes >= dinnerStart &&
+      currentTimeInMinutes < dinnerEnd
+    ) {
+      mealKey = "dinner"
+      mealClass = "bg-primary text-white"
+      isMealTime = true
+    } else {
+      mealKey = "out"
+      mealClass = "bg-warning"
+      isMealTime = false
+    }
+  }
   function showSuccess(data) {
     // ... (employee id, name, date handling as before) ...
 
     // Get meal names using the new helper
     const mealNames = getMealNames(data.meal_type)
 
-    // Display them separately or combined as needed in the results area
-    // Example: Display combined with <br> in the results table
-    // $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`);
-    // Or display only one, or display them in different elements if your HTML structure changes
-
-    // FOR NOW, let's keep the combined <br> format in the success result area
-    // as the request was specifically for the #current-meal indicator.
-    // If you want the success result table to also follow the "Label: Name" format,
-    // you'd update the HTML structure and the JS here.
     $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`)
 
     // ... (token handling and showing container as before) ...
@@ -160,10 +157,83 @@ $(document).ready(function () {
         ? new Date(data.reservation_date).toLocaleDateString("ar-SA")
         : new Date().toLocaleDateString("ar-SA")
     )
+    const base64String = data.reservation?.token_pdf
+    if (base64String) {
+      const fileName = `token_${data.employee.employee_id}_${data.meal_type}.pdf`
+      const binaryString = atob(base64String)
+      const len = binaryString.length
+      const bytes = new Uint8Array(len)
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
 
-    const tokenUrl = data.reservation?.token_pdf
-    if (tokenUrl) {
-      $("#print-token").attr("href", tokenUrl).show()
+      const pdfBlob = new Blob([bytes], { type: "application/pdf" })
+
+      // 4. Create an Object URL for the Blob
+      const objectUrl = URL.createObjectURL(pdfBlob)
+
+      // --- Options for Printing/Displaying ---
+
+      // Option A: Open in a new tab (browser PDF viewer handles printing)
+      // window.open(objectUrl, "_blank")
+      // Option B: Create a link and simulate click for download
+
+      const link = document.createElement("a")
+      link.href = objectUrl
+      link.download = fileName // Suggest a filename
+      document.body.appendChild(link) // Required for Firefox
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(objectUrl) // Clean up the Object URL after use if downloading
+
+      // Option C: Embed in an iframe and try to print (can be tricky due to security)
+
+      const iframe = document.createElement("iframe")
+      iframe.style.position = "absolute"
+      iframe.style.width = "0"
+      iframe.style.height = "0"
+      iframe.style.border = "0"
+      iframe.src = objectUrl // Load the PDF blob URL
+      iframe.style.display = "none" // Hide the iframe
+      iframe.src = objectUrl
+      iframe.onload = () => {
+        try {
+          console.log("Attempting kiosk print...")
+          iframe.contentWindow.print() // Trigger print
+          console.log("Print command issued.")
+          // Clean up after a short delay
+          setTimeout(() => {
+            document.body.removeChild(iframe)
+            URL.revokeObjectURL(objectUrl)
+            console.log("Iframe and Object URL cleaned up.")
+          }, 2000) // Adjust delay if needed
+        } catch (e) {
+          console.error("Kiosk printing failed:", e)
+          // Provide fallback or error message if necessary
+          alert(
+            "Printing failed. Please check printer connection and Chrome kiosk settings."
+          )
+          // Clean up even on error
+          setTimeout(() => {
+            try {
+              document.body.removeChild(iframe)
+            } catch {}
+            URL.revokeObjectURL(objectUrl)
+          }, 500)
+        }
+      }
+      iframe.onerror = err => {
+        console.error("Failed to load PDF into iframe:", err)
+        alert("Failed to load PDF for printing.")
+        URL.revokeObjectURL(objectUrl)
+      }
+      document.body.appendChild(iframe)
+
+      // If NOT downloading immediately, you might want to revoke the object URL later
+      // when it's no longer needed to free up memory. For opening in a new tab,
+      // the browser handles it until the tab is closed.
+      // // URL.revokeObjectURL(objectUrl);
+      // $("#print-token").attr("href", fileName ).show()
     } else {
       $("#print-token").attr("href", "#").hide()
     }
@@ -227,7 +297,7 @@ $(document).ready(function () {
         console.error("Error stopping scanner:", err)
         isScannerRunning = false
         $("#scanner-video").hide()
-        if (currentMealTimeKey === "خارج") {
+        if (currentMealTimeKey === "out") {
           // Use .html() to render the <br>
           $("#scanner-status-message")
             .html(
@@ -260,7 +330,7 @@ $(document).ready(function () {
   }
 
   $("#manual-submit").on("click", function () {
-    if (currentMealTimeKey === "خارج") {
+    if (currentMealTimeKey === "out") {
       showError(
         "لا يمكن الإدخال اليدوي خارج أوقات الوجبات.<br>ورود دستی خارج از زمان وعده غذایی مجاز نیست."
       ) // Arabic <br> Persian
@@ -293,9 +363,8 @@ $(document).ready(function () {
               .json()
               .then(errData => {
                 throw new Error(
-                  errData.message ||
-                    "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد." // Arabic <br> Persian
-                )
+                  "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد."
+                ) // Arabic <br> Persian
               })
               .catch(() => {
                 throw new Error(
@@ -315,26 +384,16 @@ $(document).ready(function () {
       .then(data => {
         if (data.success && data.active) {
           const reservationMealApiType = data.data.meal_type.toLowerCase()
-          let expectedMealApiType = null
 
-          if (currentMealTimeKey === "فطور") expectedMealApiType = "breakfast"
-          else if (currentMealTimeKey === "غداء") expectedMealApiType = "lunch"
-          else if (currentMealTimeKey === "عشاء") expectedMealApiType = "dinner"
+          return showSuccess(data.data)
 
-          if (
-            expectedMealApiType &&
-            reservationMealApiType === expectedMealApiType
-          ) {
-            showSuccess(data.data)
-          } else {
-            const reservationMealDisplay = getBilingualMealName(
-              reservationMealApiType
-            )
-            const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
-            showError(
-              `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
-            )
-          }
+          const reservationMealDisplay = getBilingualMealName(
+            reservationMealApiType
+          )
+          const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
+          showError(
+            `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
+          )
         } else if (data.success && !data.active) {
           const employeeName = data.data.employee
             ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
@@ -358,11 +417,7 @@ $(document).ready(function () {
       .finally(() => {
         $("#loading-indicator").hide()
         setTimeout(() => {
-          if (
-            html5QrCode &&
-            isScannerRunning &&
-            currentMealTimeKey !== "خارج"
-          ) {
+          if (html5QrCode && isScannerRunning && currentMealTimeKey !== "out") {
             try {
               html5QrCode.resume()
               console.log("Scanner resumed.")
@@ -392,6 +447,19 @@ $(document).ready(function () {
     if (!tokenUrl || tokenUrl === "#") {
       e.preventDefault()
       showError("ملف القسيمة غير متوفر.<br>فایل رسید در دسترس نیست.") // Arabic <br> Persian
+    }
+  })
+
+  const nums = []
+  window.addEventListener("keypress", e => {
+    nums.push(e.key)
+
+    if (nums.length === 7) {
+      const employeeId = nums.join("")
+      nums.length = 0
+
+      alert(`processing id: ${employeeId}`)
+      processEmployeeId(employeeId)
     }
   })
 

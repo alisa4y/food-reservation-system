@@ -7,7 +7,7 @@ const days = [
   "پنجشنبه",
   "جمعه",
 ]
-function updateReservationsTable(responseData) {
+function updateReservationsTable(responseData, showOp = false) {
   let reservations = responseData.data
 
   if (reservations.reservations) {
@@ -37,17 +37,15 @@ function updateReservationsTable(responseData) {
                                 <td>${getMealStatusText(res.breakfast)}</td>
                                 <td>${getMealStatusText(res.lunch)}</td>
                                 <td>${getMealStatusText(res.dinner)}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-info view-reservation-btn" data-id="${
-                                      res.id
-                                    }" title="مشاهده"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-sm btn-warning edit-reservation-btn" data-id="${
-                                      res.id
-                                    }" title="ویرایش"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-danger delete-reservation-btn" data-id="${
-                                      res.id
-                                    }" title="حذف"><i class="fas fa-trash"></i></button>
-                                </td>
+                                ${
+                                  showOp
+                                    ? `<td>
+                                    <button class="btn btn-sm btn-info view-reservation-btn" data-id="${res.id}" title="مشاهده"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-sm btn-warning edit-reservation-btn" data-id="${res.id}" title="ویرایش"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-danger delete-reservation-btn" data-id="${res.id}" title="حذف"><i class="fas fa-trash"></i></button>
+                                </td>`
+                                    : ""
+                                }
                             </tr>
                         `
       tableBody.append(row)

@@ -1,5 +1,12 @@
 const { db, runQuery, getAllRows, getRow } = require("../config/database")
 
+const breakfastStart = 7 * 60
+const breakfastEnd = 8 * 60 + 30
+const lunchStart = 12 * 60
+const lunchEnd = 15 * 60
+const dinnerStart = 19 * 60
+const dinnerEnd = 21 * 60 + 30
+
 class Reservation {
   // Get all reservations
   static async getAll() {
@@ -347,19 +354,32 @@ class Reservation {
   // Check if employee has active reservation for current meal
   static async checkActiveReservation(employeeId) {
     try {
-      const currentHour = new Date().getHours()
+      const now = new Date()
+      const hours = now.getHours()
+      const minutes = now.getMinutes()
+      // --- Define Meal Times (as before) ---
+      const currentTimeInMinutes = hours * 60 + minutes
 
       let mealType = ""
       let mealField = ""
 
-      // Determine current meal based on time
-      if (currentHour >= 7 && currentHour < 8) {
+      // --- Determine Meal Key and Class (as before) ---
+      if (
+        currentTimeInMinutes >= breakfastStart &&
+        currentTimeInMinutes < breakfastEnd
+      ) {
         mealType = "breakfast"
         mealField = "breakfast"
-      } else if (currentHour >= 12 && currentHour < 15) {
+      } else if (
+        currentTimeInMinutes >= lunchStart &&
+        currentTimeInMinutes < lunchEnd
+      ) {
         mealType = "lunch"
         mealField = "lunch"
-      } else if (currentHour >= 19 && currentHour < 21) {
+      } else if (
+        currentTimeInMinutes >= dinnerStart &&
+        currentTimeInMinutes < dinnerEnd
+      ) {
         mealType = "dinner"
         mealField = "dinner"
       } else {
@@ -367,6 +387,7 @@ class Reservation {
       }
 
       // Check for reservation
+      const currentDate = new Date().toLocaleDateString()
       const reservation = await getRow(
         `
         SELECT r.*, e.first_name, e.last_name, e.is_guest
@@ -379,6 +400,16 @@ class Reservation {
 
       if (reservation) {
         const isInShift = reservation[mealField] === 1
+
+        // disable for testing
+        // await runQuery(
+        //   `UPDATE reservations
+        //    SET ${mealField} = ?,
+        //        updated_at = CURRENT_TIMESTAMP
+        //    WHERE id = ?`,
+        //   [isInShift ? 3 : 4, reservation.id]
+        // )
+
         return {
           active: true,
           reservation,
