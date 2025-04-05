@@ -1,11 +1,11 @@
 const days = [
-  "شنبه",
   "یکشنبه",
   "دوشنبه",
   "سه شنبه",
   "چهارشنبه",
   "پنجشنبه",
   "جمعه",
+  "شنبه",
 ]
 function updateReservationsTable(responseData, showOp = false) {
   let reservations = responseData.data
@@ -33,7 +33,7 @@ function updateReservationsTable(responseData, showOp = false) {
                                 <td>${res.first_name || ""} ${
         res.last_name || ""
       }</td>
-                                <td>${res.date}</td>
+                                <td>${showDate(res.date)}</td>
                                 <td>${getMealStatusText(res.breakfast)}</td>
                                 <td>${getMealStatusText(res.lunch)}</td>
                                 <td>${getMealStatusText(res.dinner)}</td>
@@ -111,8 +111,30 @@ function getMealStatusText(status) {
       return '<span class="badge meal-status bg-light text-dark">نامشخص</span>'
   }
 }
-function getPersianDayOfWeek(date) {
-  const dayIndex = date.getDay()
+function getPersianDayOfWeek(reservationDate) {
+  const year = reservationDate.slice(0, 4)
+  const month = reservationDate.slice(4, 6)
+  const day = reservationDate.slice(6, 8)
+
+  const d = new Date(year, month - 1, day)
+  const dayIndex = d.getDay()
 
   return days[dayIndex]
 }
+function showDate(date) {
+  date = date.toString()
+  const year = date.slice(0, 4)
+  const month = date.slice(4, 6)
+  const day = date.slice(6, 8)
+
+  return `${day}/${month}/${year}`
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const elms = document.querySelectorAll('[type="date"]')
+  elms.forEach(elm => {
+    elm.addEventListener("change", () => {
+      // elm.value = elm.valueAsDate.toLocaleDateString("en-GB")
+    })
+  })
+})

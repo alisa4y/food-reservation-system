@@ -7,6 +7,7 @@ const upload = multer({ dest: "uploads/" })
 const exceljs = require("exceljs")
 const fs = require("fs")
 const { generateMealToken } = require("../utils/pdfGenerator")
+const { parseDateStr } = require("../utils/tools")
 
 // Get all reservations
 router.get("/", async (req, res) => {
@@ -58,7 +59,8 @@ router.get("/employee/:employeeId", async (req, res) => {
 // Create new reservation
 router.post("/", async (req, res) => {
   try {
-    const { employee_id, date, breakfast, lunch, dinner } = req.body
+    let { employee_id, date, breakfast, lunch, dinner } = req.body
+    date = parseDateStr(date)
     // Validate required fields
     if (!employee_id || !date) {
       return res
@@ -173,6 +175,8 @@ router.post("/filter", async (req, res) => {
     const filters = req.body
     const reservations = await Reservation.searchWithPagination({
       ...filters,
+      startDate: parseDateStr(filters.startDate),
+      endDate: parseDateStr(filters.endDate),
     })
     res.json({ success: true, data: reservations })
   } catch (error) {
@@ -187,6 +191,8 @@ router.post("/search", async (req, res) => {
     const filters = req.body
     const reservations = await Reservation.searchAny({
       ...filters,
+      startDate: parseDateStr(filters.startDate),
+      endDate: parseDateStr(filters.endDate),
     })
     res.json({ success: true, data: reservations })
   } catch (error) {
@@ -217,7 +223,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
       if (rowNumber > 1) {
         const reservation = {
           employee_id: row.getCell(1).value?.toString().trim(),
-          date: row.getCell(2).value,
+          date: parseDateStr(row.getCell(2).value),
           breakfast: +(parseInt(row.getCell(3).value) == 1),
           lunch: +(parseInt(row.getCell(4).value) == 1),
           dinner: +(parseInt(row.getCell(5).value) == 1),
@@ -252,81 +258,6 @@ router.post("/import", upload.single("file"), async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to import reservations" })
-  }
-})
-
-// Check active reservation for barcode scanning
-router.get("/check-active/:employeeId", async (req, res) => {
-  try {
-    const employeeId = req.params.employeeId
-
-    // Check if employee exists
-    const employee = await Employee.getById(employeeId)
-    if (!employee) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Employee not found" })
-    }
-
-    const result = await Reservation.checkActiveReservation(employeeId)
-
-    if (result.active) {
-      // Generate token PDF
-      const token = await generateMealToken(
-        result.reservation,
-        result.mealType,
-        result.reservation.id
-      )
-      return res.json({
-        success: true,
-        active: true,
-        data: {
-          employee: {
-            employee_id: employee.employee_id,
-            first_name: employee.first_name,
-            last_name: employee.last_name,
-            is_guest: employee.is_guest,
-          },
-          meal_type: result.mealType,
-          reservation: {
-            ...result.reservation,
-            token_pdf: token.toString("base64"),
-          },
-        },
-      })
-    } else {
-      let message = result.message
-      if (result.consumed) {
-        message = `این وعده غذایی (${
-          result.mealType === "breakfast"
-            ? "صبحانه"
-            : result.mealType === "lunch"
-            ? "ناهار"
-            : "شام"
-        }) قبلاً مصرف شده و ژتون آن چاپ شده است.`
-      }
-
-      return res.json({
-        success: true,
-        active: false,
-        consumed: result.consumed || false,
-        data: {
-          employee: {
-            employee_id: employee.employee_id,
-            first_name: employee.first_name,
-            last_name: employee.last_name,
-            is_guest: employee.is_guest,
-          },
-          meal_type: result.mealType,
-          message: message,
-        },
-      })
-    }
-  } catch (error) {
-    console.error("Error checking active reservation:", error)
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to check active reservation" })
   }
 })
 

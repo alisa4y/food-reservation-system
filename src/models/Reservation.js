@@ -1,4 +1,5 @@
 const { db, runQuery, getAllRows, getRow } = require("../config/database")
+const { parseDate } = require("../utils/tools")
 
 const breakfastStart = 7 * 60
 const breakfastEnd = 8 * 60 + 30
@@ -70,7 +71,7 @@ class Reservation {
         JOIN employees e ON r.employee_id = e.employee_id
         WHERE r.employee_id = ? AND r.date = ?
       `,
-        [employeeId, date]
+        [employeeId, parseDate(date)]
       )
     } catch (error) {
       console.error("Error getting reservation by employee ID and date:", error)
@@ -88,7 +89,7 @@ class Reservation {
           employee_id, date, 
           breakfast, lunch, dinner
         ) VALUES (?, ?, ?, ?, ?)`,
-        [employee_id, date, breakfast || 0, lunch || 0, dinner || 0]
+        [employee_id, parseDate(date), breakfast || 0, lunch || 0, dinner || 0]
       )
     } catch (error) {
       console.error("Error creating reservation:", error)
@@ -163,11 +164,11 @@ class Reservation {
       // date range filter
       if (filters.startDate) {
         conditions.push("r.date = ?")
-        params.push(filters.startDate)
+        params.push(parseDate(filters.startDate))
       }
       if (filters.endDate) {
         conditions.push("r.date = ?")
-        params.push(filters.endDate)
+        params.push(parseDate(filters.endDate))
       }
 
       let whereClause =
@@ -278,11 +279,11 @@ class Reservation {
       // date range filter
       if (filters.startDate) {
         whereClause += " AND r.date >= ?"
-        params.push(filters.startDate)
+        params.push(parseDate(filters.startDate))
       }
       if (filters.endDate) {
         whereClause += " AND r.date < ?"
-        params.push(filters.endDate)
+        params.push(parseDate(filters.endDate))
       }
 
       const validMealTypes = ["breakfast", "lunch", "dinner"]
@@ -360,8 +361,8 @@ class Reservation {
       // --- Define Meal Times (as before) ---
       const currentTimeInMinutes = hours * 60 + minutes
 
-      let mealType = ""
-      let mealField = ""
+      let mealType = "lunch"
+      let mealField = "lunch"
 
       // --- Determine Meal Key and Class (as before) ---
       if (
@@ -387,7 +388,7 @@ class Reservation {
       }
 
       // Check for reservation
-      const currentDate = new Date().toLocaleDateString()
+      const currentDate = parseDate(new Date())
       const reservation = await getRow(
         `
         SELECT r.*, e.first_name, e.last_name, e.is_guest
@@ -402,13 +403,13 @@ class Reservation {
         const isInShift = reservation[mealField] === 1
 
         // disable for testing
-        // await runQuery(
-        //   `UPDATE reservations
-        //    SET ${mealField} = ?,
-        //        updated_at = CURRENT_TIMESTAMP
-        //    WHERE id = ?`,
-        //   [isInShift ? 3 : 4, reservation.id]
-        // )
+        await runQuery(
+          `UPDATE reservations
+           SET ${mealField} = ?,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [isInShift ? 3 : 4, reservation.id]
+        )
 
         return {
           active: true,
@@ -427,7 +428,7 @@ class Reservation {
           JOIN employees e ON r.employee_id = e.employee_id
           WHERE r.employee_id = ? AND r.date = ? AND (r.${mealField} = 3 OR r.${mealField} = 4)
         `,
-          [employeeId, currentDate]
+          [employeeId, parseDate(currentDate)]
         )
 
         if (consumedReservation) {
@@ -494,7 +495,7 @@ class Reservation {
       try {
         await runStatement([
           res.employee_id,
-          res.date,
+          parseDate(res.date),
           res.breakfast || 0,
           res.lunch || 0,
           res.dinner || 0,
@@ -502,7 +503,9 @@ class Reservation {
         successCount++
       } catch (err) {
         console.error(
-          `Error importing reservation for ${res.employee_id} on ${res.date}:`,
+          `Error importing reservation for ${res.employee_id} on ${parseDate(
+            res.date
+          )}:`,
           err.message
         )
         // Continue processing remaining reservations
@@ -558,7 +561,7 @@ class Reservation {
 
       reservations.push({
         employee_id: employeeId,
-        date: this.generateRandomDate().toLocaleDateString(),
+        date: this.generateRandomDate(),
         breakfast: Math.floor(Math.random() * 5), // 0-4
         lunch: Math.floor(Math.random() * 5),
         dinner: Math.floor(Math.random() * 5),

@@ -71,8 +71,8 @@ app.get("/admin", async (req, res) => {
     const todayReserves =
       (
         await Reservation.searchWithPagination({
-          startDate: todayDate.toLocaleDateString(),
-          endDate: tomorrow.toLocaleDateString(),
+          startDate: todayDate,
+          endDate: tomorrow,
         })
       ).reservations.length || 0 // Fetches today's reservations count
     const totalReserves = await Reservation.getTotalCount() // Fetches total reservations count

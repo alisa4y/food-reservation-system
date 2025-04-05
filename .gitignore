@@ -4,4 +4,4 @@ doc.txt
 __tests__
 test**
 package-lock.json
-food-reservation-system/src/config/food_reservation.db
+src/config/food_reservation.db

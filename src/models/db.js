@@ -36,7 +36,7 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS reservations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         employee_id TEXT NOT NULL,
-        date TEXT NOT NULL,
+        date INTEGER NOT NULL,
         breakfast INTEGER DEFAULT 0,
         lunch INTEGER DEFAULT 0,
         dinner INTEGER DEFAULT 0,
@@ -46,9 +46,9 @@ const initializeDatabase = async () => {
         UNIQUE (employee_id, date)
       )
     `)
-    setTimeout(() => {
-      addingData4test()
-    }, 100)
+    // setTimeout(() => {
+    //   addingData4test()
+    // }, 100)
 
     console.log("Database initialized successfully")
   } catch (error) {

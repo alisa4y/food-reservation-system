@@ -13,12 +13,11 @@ $(document).ready(function () {
     $("#lunch-status").val("0")
     $("#dinner-status").val("0")
 
-    // Set today's date in YYYY-MM-DD format for the date input
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, "0") // Months are 0-indexed
-    const day = String(today.getDate()).padStart(2, "0")
-    $("#reservation-date").val(`${year}-${month}-${day}`)
+    const date = document
+      .getElementById("reservation-date")
+      .valueAsDate.toLocaleDateString("en-GB")
+
+    $("#reservation-date").val(date)
 
     $("#reservation-modal-label").text("افزودن رزرو")
     $("#reservation-modal").modal("show")
@@ -33,7 +32,7 @@ $(document).ready(function () {
     const employeeId = employeeIdPrefix + employeeIdSuffix
     const date = document
       .getElementById("reservation-date")
-      .valueAsDate.toLocaleDateString()
+      .valueAsDate.toLocaleDateString("en-GB")
     const breakfast = parseInt($("#breakfast-status").val())
     const lunch = parseInt($("#lunch-status").val())
     const dinner = parseInt($("#dinner-status").val())
@@ -115,19 +114,8 @@ $(document).ready(function () {
             $("#employee-id-suffix").val(employeeId)
           }
 
-          // Format the received date (assuming milliseconds or ISO string) to YYYY-MM-DD
-          let formattedDate = ""
-          if (reservation.date) {
-            try {
-              const dateObj = new Date(reservation.date)
-              const year = dateObj.getFullYear()
-              const month = String(dateObj.getMonth() + 1).padStart(2, "0")
-              const day = String(dateObj.getDate()).padStart(2, "0")
-              formattedDate = `${year}-${month}-${day}`
-            } catch (e) {
-              console.error("Error formatting date for edit:", e)
-            }
-          }
+          let formattedDate = showDate(reservation.date)
+
           $("#reservation-date").val(formattedDate)
 
           $("#breakfast-status").val(reservation.breakfast)
@@ -171,11 +159,9 @@ $(document).ready(function () {
           $("#view-position").text(reservation.position || "نامشخص")
           $("#view-department").text(reservation.department || "نامشخص")
 
-          const d = new Date(reservation.date)
-
-          const persianDateStr = d.toLocaleDateString() || "نامعتبر"
-          const dayName = getPersianDayOfWeek(d) // Or remove this if day name isn't provided/needed
-          $("#view-date").text(persianDateStr)
+          const dateStr = showDate(reservation.date)
+          const dayName = getPersianDayOfWeek(reservation.date) // Or remove this if day name isn't provided/needed
+          $("#view-date").text(dateStr)
           $("#view-day").text(dayName) // Keep or remove based on server data
 
           $("#view-is-guest").text(reservation.is_guest ? "بله" : "خیر") // Assuming is_guest field exists
@@ -326,7 +312,7 @@ $(document).ready(function () {
 
     if (!searchQuery.valueAsDate) {
       return loadReservations(1)
-    } else searchQuery = searchQuery.valueAsDate.toLocaleDateString()
+    } else searchQuery = searchQuery.valueAsDate.toLocaleDateString("en-GB")
 
     if (searchQuery) {
       fetch("/api/reservations/search".toString(), {

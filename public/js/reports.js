@@ -70,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const department = document.getElementById("department-filter").value.trim()
     const startDate = document
       .getElementById("start-date")
-      .valueAsDate.toLocaleDateString()
+      .valueAsDate.toLocaleDateString("en-GB")
     const endDate = document
       .getElementById("end-date")
-      .valueAsDate.toLocaleDateString()
+      .valueAsDate.toLocaleDateString("en-GB")
     const mealShift = Array.from(
       document.querySelectorAll('input[name="meal-shift"]:checked')
     ).map(e => e.value)

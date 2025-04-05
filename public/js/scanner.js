@@ -154,8 +154,8 @@ $(document).ready(function () {
     )
     $("#result-date").text(
       data.reservation_date
-        ? new Date(data.reservation_date).toLocaleDateString()
-        : new Date().toLocaleDateString()
+        ? new Date(data.reservation_date).toLocaleDateString("en-GB")
+        : new Date().toLocaleDateString("en-GB")
     )
     const base64String = data.reservation?.token_pdf
     if (base64String) {
@@ -175,8 +175,8 @@ $(document).ready(function () {
       // --- Options for Printing/Displaying ---
 
       // Option A: Open in a new tab (browser PDF viewer handles printing)
-      window.open(objectUrl, "_blank")
-      return
+      // window.open(objectUrl, "_blank")
+      // return
       // Option B: Create a link and simulate click for download
 
       const link = document.createElement("a")
@@ -351,7 +351,7 @@ $(document).ready(function () {
     $("#error-message").hide()
     $("#loading-indicator").show()
 
-    fetch(`/api/reservations/check-active/${employeeId}`, {
+    fetch(`/scanner/check-active/${employeeId}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -452,9 +452,12 @@ $(document).ready(function () {
   })
 
   const nums = []
+  const clearNums = debounce(() => {
+    nums.length = 0
+  }, 500)
   window.addEventListener("keypress", e => {
     nums.push(e.key)
-
+    clearNums()
     if (nums.length === 7) {
       const employeeId = nums.join("")
       nums.length = 0
@@ -463,7 +466,6 @@ $(document).ready(function () {
       processEmployeeId(employeeId)
     }
   })
-
   // --- Initial Setup ---
   // Make sure your HTML placeholders use <br> if needed:
   // e.g., <div id="loading-indicator" style="display: none;">جار التحميل...<br>در حال بارگذاری...</div> <!-- Arabic <br> Persian -->
@@ -496,5 +498,14 @@ function getMealNames(mealKeyOrApiType) {
     default:
       // Fallback if somehow an unknown type is passed
       return { arabic: mealKeyOrApiType, persian: mealKeyOrApiType }
+  }
+}
+function debounce(func, wait) {
+  let timeout
+
+  return function (...args) {
+    const context = this
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func.apply(context, args), wait)
   }
 }

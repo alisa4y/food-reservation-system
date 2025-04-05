@@ -34,7 +34,7 @@ async function generateMealToken(employeeData, mealType, reservationId) {
       const doc = new PDFDocument({
         size: "A7",
         margin: 10,
-        layout: "landscape",
+        layout: "portrait",
         // bufferPages: true // May improve performance for complex docs, often not needed here
       })
 

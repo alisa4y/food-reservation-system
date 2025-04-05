@@ -3,6 +3,7 @@ const router = express.Router()
 const Reservation = require("../models/Reservation")
 const { generateExcelReport } = require("../utils/excelGenerator") // Assuming excel generator utility
 const { generatePdfReport } = require("../utils/pdfGenerator") // Assuming pdf generator utility
+const { parseDateStr } = require("../utils/tools")
 
 // POST /api/reports - Fetch filtered and paginated report data with summary
 router.post("/", async (req, res) => {
@@ -24,8 +25,8 @@ router.post("/", async (req, res) => {
       employeeId,
       name,
       department,
-      startDate: startDate,
-      endDate: endDate,
+      startDate: parseDateStr(startDate),
+      endDate: parseDateStr(endDate),
       mealShift,
       mealOut,
     }
