@@ -13,11 +13,11 @@ $(document).ready(function () {
     $("#lunch-status").val("0")
     $("#dinner-status").val("0")
 
-    const date = document
-      .getElementById("reservation-date")
-      .valueAsDate.toLocaleDateString("en-GB")
+    // const date = document
+    //   .getElementById("reservation-date")
+    //   .valueAsDate.toLocaleDateString("en-GB")
 
-    $("#reservation-date").val(date)
+    // $("#reservation-date").val(date)
 
     $("#reservation-modal-label").text("افزودن رزرو")
     $("#reservation-modal").modal("show")
