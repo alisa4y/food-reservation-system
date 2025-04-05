@@ -333,7 +333,7 @@ $(document).ready(function () {
   $("#manual-submit").on("click", function () {
     if (currentMealTimeKey === "out") {
       showError(
-        "لا يمكن الإدخال اليدوي خارج أوقات الوجبات.<br>ورود دستی خارج از زمان وعده غذایی مجاز نیست."
+        "لا يمكن المسح خارج أوقات الوجبات.<br> خارج از زمان وعده غذایی مجاز نیست."
       ) // Arabic <br> Persian
       return
     }
@@ -456,6 +456,12 @@ $(document).ready(function () {
     nums.length = 0
   }, 500)
   window.addEventListener("keypress", e => {
+    if (currentMealTimeKey === "out") {
+      showError(
+        "لا يمكن الإدخال اليدوي خارج أوقات الوجبات.<br>ورود دستی خارج از زمان وعده غذایی مجاز نیست."
+      ) // Arabic <br> Persian
+      return
+    }
     nums.push(e.key)
     clearNums()
     if (nums.length === 7) {

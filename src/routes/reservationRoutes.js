@@ -221,9 +221,11 @@ router.post("/import", upload.single("file"), async (req, res) => {
     // Skip header row
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber > 1) {
+        if (!row.getCell(2).value) return
+
         const reservation = {
           employee_id: row.getCell(1).value?.toString().trim(),
-          date: parseDateStr(row.getCell(2).value),
+          date: parseDateStr(row.getCell(2).value?.toString()),
           breakfast: +(parseInt(row.getCell(3).value) == 1),
           lunch: +(parseInt(row.getCell(4).value) == 1),
           dinner: +(parseInt(row.getCell(5).value) == 1),

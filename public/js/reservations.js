@@ -233,7 +233,7 @@ $(document).ready(function () {
 
     const file = fileInput.files[0]
     const formData = new FormData()
-    formData.append("excelFile", file) // 'excelFile' should match the name expected by multer on the server
+    formData.append("file", file)
 
     // Send request using fetch
     fetch("/api/reservations/import", {
@@ -241,7 +241,6 @@ $(document).ready(function () {
       body: formData, // fetch handles FormData correctly
       headers: {
         Accept: "application/json", // Expect JSON response
-        "Content-Type": "application/json", // Must be explicitly set
       },
     })
       .then(response => response.json())
