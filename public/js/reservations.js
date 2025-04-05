@@ -115,8 +115,8 @@ $(document).ready(function () {
           }
 
           let formattedDate = showDate(reservation.date)
-
-          $("#reservation-date").val(formattedDate)
+          const [day, month, year] = formattedDate.split("/")
+          $("#reservation-date").val(`${year}-${month}-${day}`)
 
           $("#breakfast-status").val(reservation.breakfast)
           $("#lunch-status").val(reservation.lunch)

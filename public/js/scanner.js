@@ -140,111 +140,247 @@ $(document).ready(function () {
     }
   }
   function showSuccess(data) {
-    // ... (employee id, name, date handling as before) ...
+    try {
+      console.log("showSuccess called with data:", data) // Log input data
 
-    // Get meal names using the new helper
-    const mealNames = getMealNames(data.meal_type)
+      const mealNames = getMealNames(data.meal_type) // Assuming getMealNames is defined elsewhere
 
-    $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`)
+      $("#result-meal").html(`${mealNames.arabic}<br>${mealNames.persian}`)
+      $("#result-employee-id").text(data.employee.employee_id)
+      $("#result-name").text(
+        `${data.employee.first_name} ${data.employee.last_name}`
+      )
+      $("#result-date").text(
+        data.reservation_date
+          ? new Date(data.reservation_date).toLocaleDateString("en-GB")
+          : new Date().toLocaleDateString("en-GB")
+      )
 
-    // ... (token handling and showing container as before) ...
-    $("#result-employee-id").text(data.employee.employee_id)
-    $("#result-name").text(
-      `${data.employee.first_name} ${data.employee.last_name}`
-    )
-    $("#result-date").text(
-      data.reservation_date
-        ? new Date(data.reservation_date).toLocaleDateString("en-GB")
-        : new Date().toLocaleDateString("en-GB")
-    )
-    const base64String = data.reservation?.token_pdf
-    if (base64String) {
-      const fileName = `token_${data.employee.employee_id}_${data.meal_type}.pdf`
-      const binaryString = atob(base64String)
-      const len = binaryString.length
-      const bytes = new Uint8Array(len)
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
+      // Check if PDF data exists
+      const base64String = data.reservation?.token_pdf
+      if (base64String) {
+        console.log("Base64 PDF string found, attempting to print.")
 
-      const pdfBlob = new Blob([bytes], { type: "application/pdf" })
+        // --- PDF Processing and Silent Printing Logic ---
+        let pdfObjectUrl = null // Declare outside try block for cleanup
+        let htmlObjectUrl = null // Declare outside try block for cleanup
+        let iframe = null // Declare outside try block for cleanup
 
-      // 4. Create an Object URL for the Blob
-      const objectUrl = URL.createObjectURL(pdfBlob)
-
-      // --- Options for Printing/Displaying ---
-
-      // Option A: Open in a new tab (browser PDF viewer handles printing)
-      // window.open(objectUrl, "_blank")
-      // return
-      // Option B: Create a link and simulate click for download
-
-      const link = document.createElement("a")
-      link.href = objectUrl
-      link.download = fileName // Suggest a filename
-      document.body.appendChild(link) // Required for Firefox
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(objectUrl) // Clean up the Object URL after use if downloading
-
-      // Option C: Embed in an iframe and try to print (can be tricky due to security)
-
-      const iframe = document.createElement("iframe")
-      iframe.style.position = "absolute"
-      iframe.style.width = "0"
-      iframe.style.height = "0"
-      iframe.style.border = "0"
-      iframe.src = objectUrl // Load the PDF blob URL
-      iframe.style.display = "none" // Hide the iframe
-      iframe.src = objectUrl
-      iframe.onload = () => {
         try {
-          console.log("Attempting kiosk print...")
-          iframe.contentWindow.print() // Trigger print
-          console.log("Print command issued.")
-          // Clean up after a short delay
+          // 1. Decode Base64 and Create PDF Blob
+          const fileName = `token_${data.employee.employee_id}_${data.meal_type}.pdf`
+          const binaryString = atob(base64String)
+          const len = binaryString.length
+          const bytes = new Uint8Array(len)
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+          }
+          const pdfBlob = new Blob([bytes], { type: "application/pdf" })
+
+          // 2. Create Object URL for the PDF Blob
+          pdfObjectUrl = URL.createObjectURL(pdfBlob)
+          console.log("PDF Object URL created:", pdfObjectUrl)
+
+          // 3. Create HTML Wrapper Content
+          //    This HTML embeds the PDF and calls print() on itself
+          const htmlContent = `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                      <title>Printing ${fileName}</title>
+                      <style>
+                          body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+                          embed { position:absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; }
+                      </style>
+                  </head>
+                  <body>
+                      <!-- Use embed to trigger browser's PDF viewer -->
+                      <embed id="pdfEmbed" type="application/pdf" src="${pdfObjectUrl}" width="100%" height="100%">
+  
+                      <script>
+                          console.log('Wrapper: Script executing.');
+                          let printAttempted = false;
+                          const attemptPrint = () => {
+                              if (printAttempted) {
+                                  console.log('Wrapper: Print already attempted.');
+                                  return;
+                              }
+                              printAttempted = true;
+                              console.log('Wrapper: Attempting window.print() now...');
+                              try {
+                                  // Print the window this script is running in
+                                  window.print();
+                                  console.log('Wrapper: window.print() command issued.');
+                                  // NOTE: There's no direct confirmation here that printing *started*.
+                                  // The --kiosk-printing flag handles skipping the dialog.
+                              } catch (e) {
+                                  console.error('Wrapper: Error calling window.print()', e);
+                              }
+                          };
+  
+                          // Wait for the window (and hopefully the embed) to load
+                          window.onload = () => {
+                              console.log('Wrapper: Window loaded. Setting print timeout (5 seconds).');
+                              // Add a significant delay to allow the PDF viewer plugin time to initialize
+                              setTimeout(attemptPrint, 5000); // 5 seconds delay - ADJUST AS NEEDED
+                          };
+  
+                          // Fallback timer in case onload is unreliable or PDF is very slow
+                          console.log('Wrapper: Setting fallback print timeout (8 seconds).');
+                          setTimeout(attemptPrint, 8000); // 8 seconds fallback - ADJUST AS NEEDED
+  
+                          // Optional: Error handling for the embed tag itself
+                          const embedElement = document.getElementById('pdfEmbed');
+                          if (embedElement) {
+                               embedElement.onerror = (e) => {
+                                   console.error('Wrapper: Error loading PDF in <embed> tag.', e);
+                               };
+                          } else {
+                               console.error('Wrapper: <embed> element not found immediately.');
+                          }
+                          console.log('Wrapper: Script execution finished.');
+                      </script>
+                  </body>
+                  </html>
+              `
+
+          // 4. Create Blob and Object URL for the HTML Wrapper
+          const htmlBlob = new Blob([htmlContent], { type: "text/html" })
+          htmlObjectUrl = URL.createObjectURL(htmlBlob)
+          console.log("HTML Wrapper Object URL created:", htmlObjectUrl)
+
+          // 5. Create and Configure the Iframe
+          iframe = document.createElement("iframe")
+          iframe.style.position = "absolute"
+          iframe.style.width = "1px" // Keep it small and out of the way
+          iframe.style.height = "1px"
+          iframe.style.opacity = "0" // Hide it visually
+          iframe.style.left = "-9999px" // Position off-screen
+          iframe.style.border = "0"
+
+          // Assign load/error handlers *before* setting src
+          iframe.onload = () => {
+            console.log(
+              "Parent: Iframe loaded HTML wrapper successfully. Internal script should now handle printing."
+            )
+            // DO NOT call iframe.contentWindow.print() here!
+          }
+
+          iframe.onerror = err => {
+            // This catches errors loading the HTML wrapper itself
+            console.error(
+              "Parent: CRITICAL - Failed to load HTML wrapper into iframe:",
+              err
+            )
+            // alert("Critical error: Failed to load print wrapper."); // Optional user feedback
+            // Clean up resources if the iframe fails to load
+            if (pdfObjectUrl) {
+              URL.revokeObjectURL(pdfObjectUrl)
+              console.log("Parent: Revoked PDF Object URL due to iframe error.")
+            }
+            if (htmlObjectUrl) {
+              URL.revokeObjectURL(htmlObjectUrl)
+              console.log(
+                "Parent: Revoked HTML Wrapper Object URL due to iframe error."
+              )
+            }
+          }
+
+          // 6. Load the HTML Wrapper into the Iframe
+          console.log("Parent: Setting iframe src to HTML wrapper URL.")
+          iframe.src = htmlObjectUrl
+
+          // 7. Append Iframe to Document to Trigger Loading
+          document.body.appendChild(iframe)
+          console.log("Parent: Iframe appended to body.")
+
+          // 8. Schedule Cleanup (IMPORTANT: Long Delay)
+          //    Give ample time for: iframe load -> internal JS -> PDF load -> print command -> print spooling
+          const cleanupDelay = 15000 // 15 seconds - ADJUST AS NEEDED (longer is safer)
+          console.log(
+            `Parent: Scheduling cleanup in ${cleanupDelay / 1000} seconds.`
+          )
           setTimeout(() => {
-            document.body.removeChild(iframe)
-            URL.revokeObjectURL(objectUrl)
-            console.log("Iframe and Object URL cleaned up.")
-          }, 2000) // Adjust delay if needed
-        } catch (e) {
-          console.error("Kiosk printing failed:", e)
-          // Provide fallback or error message if necessary
-          // alert(
-          //   "Printing failed. Please check printer connection and Chrome kiosk settings."
-          // )
-          // Clean up even on error
-          setTimeout(() => {
+            console.log("Parent: Initiating cleanup...")
             try {
+              if (iframe && document.body.contains(iframe)) {
+                document.body.removeChild(iframe)
+                console.log("Parent: Iframe removed from body.")
+              } else {
+                console.log(
+                  "Parent: Iframe already removed or not found during cleanup."
+                )
+              }
+            } catch (e) {
+              console.warn("Parent: Error removing iframe during cleanup.", e)
+            } finally {
+              // Always try to revoke URLs
+              if (pdfObjectUrl) {
+                URL.revokeObjectURL(pdfObjectUrl)
+                console.log("Parent: Revoked PDF Object URL.")
+              }
+              if (htmlObjectUrl) {
+                URL.revokeObjectURL(htmlObjectUrl)
+                console.log("Parent: Revoked HTML Wrapper Object URL.")
+              }
+              console.log("Parent: Cleanup complete.")
+            }
+          }, cleanupDelay)
+        } catch (pdfError) {
+          console.error(
+            "Parent: Error processing PDF or setting up print iframe:",
+            pdfError
+          )
+          // alert("Error preparing PDF for printing."); // Optional user feedback
+          // Clean up any URLs that might have been created before the error
+          if (pdfObjectUrl) {
+            URL.revokeObjectURL(pdfObjectUrl)
+            console.log("Parent: Revoked PDF Object URL after error.")
+          }
+          if (htmlObjectUrl) {
+            URL.revokeObjectURL(htmlObjectUrl)
+            console.log("Parent: Revoked HTML Wrapper Object URL after error.")
+          }
+          // Attempt to remove iframe if it exists
+          try {
+            if (iframe && document.body.contains(iframe)) {
               document.body.removeChild(iframe)
-            } catch {}
-            URL.revokeObjectURL(objectUrl)
-          }, 500)
+            }
+          } catch {}
         }
-      }
-      iframe.onerror = err => {
-        console.error("Failed to load PDF into iframe:", err)
-        // alert("Failed to load PDF for printing.")
-        URL.revokeObjectURL(objectUrl)
-      }
-      document.body.appendChild(iframe)
 
-      // If NOT downloading immediately, you might want to revoke the object URL later
-      // when it's no longer needed to free up memory. For opening in a new tab,
-      // the browser handles it until the tab is closed.
-      // // URL.revokeObjectURL(objectUrl);
-      // $("#print-token").attr("href", fileName ).show()
-    } else {
-      $("#print-token").attr("href", "#").hide()
+        // --- End of PDF Printing Logic ---
+
+        // Hide the placeholder print button if it exists
+        $("#print-token").attr("href", "#").hide()
+      } else {
+        // Handle case where there is no PDF data
+        console.log("No Base64 PDF string found in data.")
+        $("#print-token").attr("href", "#").hide()
+      }
+
+      // Show the result container
+      $("#error-message").hide()
+      $("#result-container")
+        .removeClass("border-danger")
+        .addClass("border-success")
+        .show()
+
+      console.log("showSuccess finished.")
+    } catch (generalError) {
+      console.error(
+        "Unhandled error within showSuccess function:",
+        generalError
+      )
+      // Potentially show a generic error message to the user
+      $("#error-message").text("An unexpected error occurred.").show()
+      $("#result-container").hide()
     }
-
-    $("#error-message").hide()
-    $("#result-container")
-      .removeClass("border-danger")
-      .addClass("border-success")
-      .show()
   }
+
+  // Make sure getMealNames function is defined somewhere in your code:
+
+  // Make sure jQuery ($) is loaded before this script runs.
 
   // --- Core Functions ---
 

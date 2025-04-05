@@ -428,7 +428,7 @@ class Reservation {
           JOIN employees e ON r.employee_id = e.employee_id
           WHERE r.employee_id = ? AND r.date = ? AND (r.${mealField} = 3 OR r.${mealField} = 4)
         `,
-          [employeeId, parseDate(currentDate)]
+          [employeeId, currentDate]
         )
 
         if (consumedReservation) {
