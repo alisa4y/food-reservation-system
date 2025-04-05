@@ -191,8 +191,10 @@ router.post("/search", async (req, res) => {
     const filters = req.body
     const reservations = await Reservation.searchAny({
       ...filters,
-      startDate: parseDateStr(filters.startDate),
-      endDate: parseDateStr(filters.endDate),
+      startDate: filters.startDate
+        ? parseDateStr(filters.startDate)
+        : undefined,
+      endDate: filters.endDate ? parseDateStr(filters.endDate) : undefined,
     })
     res.json({ success: true, data: reservations })
   } catch (error) {

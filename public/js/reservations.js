@@ -250,7 +250,7 @@ $(document).ready(function () {
           loadReservations() // Reload the list
           alert(
             `بارگذاری موفقیت آمیز بود. ${
-              responseData.importedCount || 0
+              responseData.imported || 0
             } رزرو اضافه شد.`
           )
         } else {
