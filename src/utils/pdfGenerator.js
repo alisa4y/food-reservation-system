@@ -2,6 +2,7 @@ const PDFDocument = require("pdfkit")
 const fs = require("fs") // Still needed for reading font/logo
 const path = require("path")
 // const arabicShaper = require('arabic-shaper');
+const p = 28.34
 
 // *** Modified function to return a Promise<Buffer> ***
 async function generateMealToken(employeeData, mealType, reservationId) {
@@ -11,7 +12,7 @@ async function generateMealToken(employeeData, mealType, reservationId) {
     projectRoot,
     "assets/fonts/ttf/Vazirmatn-Regular.ttf"
   )
-  const logoPath = path.join(projectRoot, "public/images/logo.png")
+  const logoPath = path.join(projectRoot, "public/images/logo.jpg")
 
   // --- Pre-checks for required assets ---
   if (!fs.existsSync(fontPath)) {
@@ -32,8 +33,8 @@ async function generateMealToken(employeeData, mealType, reservationId) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
-        size: "A7",
-        margin: 10,
+        size: [8 * p, 6.2 * p],
+        margin: 0,
         layout: "portrait",
         // bufferPages: true // May improve performance for complex docs, often not needed here
       })
