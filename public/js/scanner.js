@@ -164,10 +164,11 @@ $(document).ready(function () {
         await fetch("http://localhost:4000/print", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json", // We are sending JSON data
-            // Add any other headers if required by your server (e.g., auth tokens)
+            "Content-Type": "text/plain",
+            Accept: "application/json",
           },
           body: base64String,
+          mode: "no-cors",
         })
 
         // Hide the placeholder print button if it exists

@@ -75,7 +75,7 @@ async function generateMealToken(employeeData, mealType, reservationId) {
 
       // Logo
       if (logoExists) {
-        doc.image(logoPath, margin, margin, { width: 40 })
+        doc.image(logoPath, margin, margin, { width: 80 })
       }
 
       // Header
