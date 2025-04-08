@@ -14,9 +14,8 @@ async function generateExcelReport(reservations, filters = {}) {
     size: 16,
     bold: true,
   }
-  worksheet.mergeCells("A1:H1") // Merge across potential columns
+  worksheet.mergeCells("A1:F1") // Merge across potential columns
   worksheet.addRow([]) // Spacer row
-
   // Add filter information if available
   const filterEntries = Object.entries(filters).filter(
     ([key, value]) => value !== undefined && value !== "" && value !== null
@@ -34,15 +33,43 @@ async function generateExcelReport(reservations, filters = {}) {
   }
 
   // --- Define Columns ---
-  worksheet.columns = [
-    { header: "Employee ID", key: "employee_id", width: 15 },
-    { header: "Name", key: "name", width: 25 },
-    { header: "Date", key: "date", width: 15 },
-    { header: "Breakfast", key: "breakfast", width: 15 },
-    { header: "Lunch", key: "lunch", width: 15 },
-    { header: "Dinner", key: "dinner", width: 15 },
+  // worksheet.columns = [
+  //   { header: "Employee ID", key: "employee_id", width: 15 },
+  //   { header: "Name", key: "name", width: 25 },
+  //   { header: "Date", key: "date", width: 15 },
+  //   { header: "Breakfast", key: "breakfast", width: 15 },
+  //   { header: "Lunch", key: "lunch", width: 15 },
+  //   { header: "Dinner", key: "dinner", width: 15 },
+  // ]
+  // --- Column Headers (Row after filters) ---
+  const headerValues = [
+    "Employee ID",
+    "Name",
+    "Date",
+    "Breakfast",
+    "Lunch",
+    "Dinner",
   ]
-
+  const headerRow = worksheet.addRow(headerValues)
+  headerRow.font = { bold: true }
+  headerValues.forEach((header, index) => {
+    const column = worksheet.getColumn(index + 1)
+    column.width = getColumnWidth(header)
+  })
+  headerRow.alignment = { vertical: "middle", horizontal: "center" }
+  headerRow.eachCell(cell => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD3D3D3" },
+    }
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    }
+  })
   // --- Style Header Row ---
   worksheet.getRow(worksheet.lastRow.number).font = { bold: true }
   worksheet.getRow(worksheet.lastRow.number).alignment = {
@@ -65,14 +92,14 @@ async function generateExcelReport(reservations, filters = {}) {
 
   // --- Add Data Rows ---
   reservations.forEach(res => {
-    worksheet.addRow({
-      employee_id: res.employee_id,
-      name: res.name || "N/A",
-      date: res.date, // Format date
-      breakfast: res.breakfast,
-      lunch: res.lunch,
-      dinner: res.dinner,
-    })
+    worksheet.addRow([
+      res.employee_id,
+      res.first_name + " " + res.last_name,
+      formatDate(res.date), // Format date
+      res.breakfast,
+      res.lunch,
+      res.dinner,
+    ])
   })
 
   // --- Apply Borders to Data Cells ---
@@ -96,3 +123,24 @@ async function generateExcelReport(reservations, filters = {}) {
 }
 
 module.exports = { generateExcelReport }
+
+function formatDate(reservationDate) {
+  reservationDate = reservationDate.toString()
+  const year = reservationDate.slice(0, 4)
+  const month = reservationDate.slice(4, 6)
+  const day = reservationDate.slice(6, 8)
+
+  return `${day}/${month}${year}`
+}
+function getColumnWidth(header) {
+  switch (header) {
+    case "Employee ID":
+      return 15
+    case "Name":
+      return 25
+    case "Date":
+      return 15
+    default:
+      return 12 // Default width for others
+  }
+}
