@@ -77,6 +77,7 @@ function getMealStatusText(status) {
   }
 }
 function getPersianDayOfWeek(reservationDate) {
+  reservationDate = reservationDate.toString()
   const year = reservationDate.slice(0, 4)
   const month = reservationDate.slice(4, 6)
   const day = reservationDate.slice(6, 8)

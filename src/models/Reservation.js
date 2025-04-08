@@ -452,7 +452,6 @@ class Reservation {
       throw error
     }
   }
-
   // Mark reservation as consumed
   static async markAsConsumed(id, mealType, isInShift) {
     try {
@@ -470,7 +469,6 @@ class Reservation {
       throw error
     }
   }
-
   // Import reservations from array
   static async importFromArray(reservationsArray) {
     let successCount = 0
@@ -516,7 +514,6 @@ class Reservation {
 
     return successCount
   }
-
   // Get total count of employees
   static async getTotalCount() {
     try {
@@ -539,7 +536,6 @@ class Reservation {
       throw error
     }
   }
-
   // Generate random date between today and next week
   static generateRandomDate() {
     const today = new Date()
@@ -548,7 +544,6 @@ class Reservation {
     date.setDate(today.getDate() + daysToAdd)
     return date
   }
-
   // Generate sample reservations data
   static generateSampleData(count = 100) {
     const reservations = []
