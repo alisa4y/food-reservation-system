@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- State ---
   let currentPage = 1
-  const itemsPerPage = 15 // Adjust as needed
+  const itemsPerPage = 20 // Adjust as needed
 
   // --- Functions ---
 

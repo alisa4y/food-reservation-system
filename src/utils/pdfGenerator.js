@@ -33,7 +33,7 @@ async function generateMealToken(employeeData, mealType, reservationId) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
-        size: [8 * p, 6.2 * p],
+        size: [7 * p, 7 * p],
         margin: 0,
         layout: "portrait",
         // bufferPages: true // May improve performance for complex docs, often not needed here
@@ -99,17 +99,17 @@ async function generateMealToken(employeeData, mealType, reservationId) {
       currentY = addRightAlignedTextRtl(`الاسم: ${nameText}`, currentY)
 
       const now = new Date()
-      let dateStr = now.toLocaleDateString("ar-EG", {
+      let dateStr = now.toLocaleString("ar-EG", {
         /* options */
       })
       currentY = addRightAlignedTextRtl(
         `التاريخ: ${dateStr
           .split("")
+          // .reverse()
+          // .join("")
+          // .split("/")
           .reverse()
-          .join("")
-          .split("/")
-          .reverse()
-          .join("/")}`,
+          .join("")}`,
         currentY
       )
 
@@ -169,31 +169,3 @@ async function generateMealToken(employeeData, mealType, reservationId) {
 module.exports = {
   generateMealToken,
 }
-// --- Example Usage (e.g., in an Express.js route) ---
-
-/*
-async function handleGenerateTokenRequest(req, res) {
-    try {
-        // Assume you get employeeData, mealType, reservationId from the request (req.body, req.params, etc.)
-        const employee = { employee_id: "١٢٣٤٥٦", first_name: "علي", last_name: "محمد" };
-        const meal = "lunch";
-        const reservation = "QSM-٩٨٧٦٥";
-
-        // Generate the PDF buffer
-        const pdfBuffer = await generateMealTokenArabicBuffer(employee, meal, reservation);
-
-        // Set response headers for PDF download
-        const fileName = `token_ar_${employee.employee_id}_${meal}_${Date.now()}.pdf`;
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`); // Use 'inline' to display in browser if supported
-        res.setHeader('Content-Length', pdfBuffer.length);
-
-        // Send the buffer as the response body
-        res.send(pdfBuffer);
-
-    } catch (error) {
-        console.error("Failed to generate and send PDF token:", error);
-        res.status(500).send("Error generating PDF token.");
-    }
-}
-*/

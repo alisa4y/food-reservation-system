@@ -212,10 +212,10 @@ class Reservation {
         ORDER BY r.date DESC, r.id DESC
       `
 
-      if (limit) {
-        dataQuery += ` LIMIT ? OFFSET ?`
-        params.push(limit, offset)
-      }
+      // if (limit) {
+      //   dataQuery += ` LIMIT ? OFFSET ?`
+      //   params.push(limit, offset)
+      // }
 
       const rawReservations = await getAllRows(dataQuery, params)
 
@@ -324,10 +324,10 @@ class Reservation {
         ORDER BY r.date DESC, r.id DESC
       `
 
-      if (limit) {
-        dataQuery += ` LIMIT ? OFFSET ?`
-        params.push(limit, offset)
-      }
+      // if (limit) {
+      //   dataQuery += ` LIMIT ? OFFSET ?`
+      //   params.push(limit, offset)
+      // }
 
       const rawReservations = await getAllRows(dataQuery, params)
 

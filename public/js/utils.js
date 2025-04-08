@@ -14,8 +14,8 @@ function updateReservationsTable(responseData, showOp = false) {
     reservations = reservations.reservations
   }
 
-  const totalCount = responseData.totalCount
-  const totalPages = responseData.totalPages
+  const totalCount = responseData.totalItems
+  const totalPages = Math.ceil(totalCount / 20)
   const currentPage = responseData.currentPage
 
   const tableBody = $("#reservations-table-body")
@@ -58,41 +58,6 @@ function updateReservationsTable(responseData, showOp = false) {
   // Generate pagination
   const paginationUl = $("#pagination")
   paginationUl.empty()
-
-  if (totalPages > 1) {
-    // Previous button
-    paginationUl.append(`
-                        <li class="page-item ${
-                          currentPage === 1 ? "disabled" : ""
-                        }">
-                            <a class="page-link" href="#" data-page="${
-                              currentPage - 1
-                            }">&laquo;</a>
-                        </li>
-                    `)
-
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-      paginationUl.append(`
-                            <li class="page-item ${
-                              currentPage === i ? "active" : ""
-                            }">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                            </li>
-                        `)
-    }
-
-    // Next button
-    paginationUl.append(`
-                        <li class="page-item ${
-                          currentPage === totalPages ? "disabled" : ""
-                        }">
-                            <a class="page-link" href="#" data-page="${
-                              currentPage + 1
-                            }">&raquo;</a>
-                        </li>
-                    `)
-  }
 }
 // Helper function to get meal status text and icon
 function getMealStatusText(status) {

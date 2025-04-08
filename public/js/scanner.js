@@ -223,13 +223,13 @@ $(document).ready(function () {
         isScannerRunning = false
         $("#scanner-video").hide()
         // Use .html() to render the <br>
-        $("#scanner-status-message")
-          .html(
-            "لا يمكن بدء تشغيل الكاميرا. تحقق من الأذونات.<br>نمی‌توان دوربین را فعال کرد. مجوزها را بررسی کنید."
-          ) // Arabic <br> Persian
-          .removeClass("alert-warning alert-info")
-          .addClass("alert-danger")
-          .show()
+        //   $("#scanner-status-message")
+        //     .html(
+        //       "لا يمكن بدء تشغيل الكاميرا. تحقق من الأذونات.<br>نمی‌توان دوربین را فعال کرد. مجوزها را بررسی کنید."
+        //     ) // Arabic <br> Persian
+        //     .removeClass("alert-warning alert-info")
+        //     .addClass("alert-danger")
+        //     .show()
       })
   }
 
