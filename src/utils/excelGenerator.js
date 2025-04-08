@@ -10,27 +10,27 @@ async function generateExcelReport(reservations, filters = {}) {
   const worksheet = workbook.addWorksheet("Food Reservations Report")
 
   // --- Add Title and Filters ---
-  worksheet.addRow(["Food Reservations Report"]).font = {
+  worksheet.addRow(["گزارش رزور غذا"]).font = {
     size: 16,
     bold: true,
   }
   worksheet.mergeCells("A1:F1") // Merge across potential columns
   worksheet.addRow([]) // Spacer row
   // Add filter information if available
-  const filterEntries = Object.entries(filters).filter(
-    ([key, value]) => value !== undefined && value !== "" && value !== null
-  )
-  if (filterEntries.length > 0) {
-    worksheet.addRow(["Applied Filters:"]).font = { bold: true }
-    filterEntries.forEach(([key, value]) => {
-      // Simple formatting for keys
-      const formattedKey = key
-        .replace(/([A-Z])/g, " $1") // Add space before capitals
-        .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
-      worksheet.addRow([`${formattedKey}:`, value])
-    })
-    worksheet.addRow([]) // Spacer row
-  }
+  // const filterEntries = Object.entries(filters).filter(
+  //   ([key, value]) => value !== undefined && value !== "" && value !== null
+  // )
+  // if (filterEntries.length > 0) {
+  //   worksheet.addRow(["Applied Filters:"]).font = { bold: true }
+  //   filterEntries.forEach(([key, value]) => {
+  //     // Simple formatting for keys
+  //     const formattedKey = key
+  //       .replace(/([A-Z])/g, " $1") // Add space before capitals
+  //       .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+  //     worksheet.addRow([`${formattedKey}:`, value])
+  //   })
+  //   worksheet.addRow([]) // Spacer row
+  // }
 
   // --- Define Columns ---
   // worksheet.columns = [
@@ -43,12 +43,12 @@ async function generateExcelReport(reservations, filters = {}) {
   // ]
   // --- Column Headers (Row after filters) ---
   const headerValues = [
-    "Employee ID",
-    "Name",
-    "Date",
-    "Breakfast",
-    "Lunch",
-    "Dinner",
+    "شماره پرسنلی", // Employee ID
+    "نام", // Name
+    "تاریخ", // Date
+    "صبحانه", // Breakfast
+    "ناهار", // Lunch
+    "شام", // Dinner
   ]
   const headerRow = worksheet.addRow(headerValues)
   headerRow.font = { bold: true }
