@@ -101,12 +101,14 @@ router.post("/", async (req, res) => {
 // GET /api/reports/export/excel - Export filtered data to Excel
 router.get("/export/excel", async (req, res) => {
   try {
-    const filters = req.body
+    const filters = req.query
     // Fetch ALL matching data (no pagination for export)
-    const { reservations } = await Reservation.searchWithPagination(filters, {
-      limit: null,
-      page: null,
-    }) // Assuming limit: null fetches all
+    const { reservations } = await Reservation.searchWithPagination({
+      ...filters,
+
+      startDate: parseDateStr(filters.startDate),
+      endDate: parseDateStr(filters.endDate),
+    })
 
     if (!reservations || reservations.length === 0) {
       return res.status(404).send("No data found for the selected filters.")
