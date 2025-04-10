@@ -346,13 +346,27 @@ $(document).ready(function () {
             `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
           )
         } else if (data.success && !data.active) {
-          const employeeName = data.data.employee
-            ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
-            : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
-          const mealDisplayBilingual = getBilingualMealName(data.data.meal_type)
-          showError(
-            `لا يوجد حجز نشط لـ ${employeeName} في وجبة ${mealDisplayBilingual} لهذا اليوم.<br>رزرو فعالی برای ${employeeName} در وعده ${mealDisplayBilingual} امروز وجود ندارد.` // Arabic <br> Persian
-          )
+          if (data.consumed) {
+            const employeeName = data.data.employee
+              ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
+              : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
+            const mealDisplayBilingual = getBilingualMealName(
+              data.data.meal_type
+            )
+            showError(
+              `${employeeName} قد تناول الوجبة الحالية (${mealDisplayBilingual}) مسبقًا.<br>${employeeName} قبلاً وعده غذایی فعلی (${mealDisplayBilingual}) را مصرف کرده است.` // Arabic <br> Persian
+            )
+          } else {
+            const employeeName = data.data.employee
+              ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
+              : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
+            const mealDisplayBilingual = getBilingualMealName(
+              data.data.meal_type
+            )
+            showError(
+              `لا يوجد حجز نشط لـ ${employeeName} في وجبة ${mealDisplayBilingual} لهذا اليوم.<br>رزرو فعالی برای ${employeeName} در وعده ${mealDisplayBilingual} امروز وجود ندارد.` // Arabic <br> Persian
+            )
+          }
         } else {
           showError(
             data.message || "خطأ في التحقق من الحجز.<br>خطا در بررسی رزرو."
