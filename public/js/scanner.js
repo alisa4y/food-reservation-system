@@ -30,6 +30,7 @@ $(document).ready(function () {
       case "dinner":
       case "عشاء":
         return "عشاء<br>شام" // Arabic <br> Persian
+      case "out":
       case "خارج":
         return "خارج أوقات الوجبات<br>خارج از زمان وعده" // Arabic <br> Persian
       default:
@@ -342,24 +343,23 @@ $(document).ready(function () {
         return response.json()
       })
       .then(data => {
+        // Safely handle `meal_type`
+        const reservationMealApiType = data.data.meal_type
+          ? data.data.meal_type.toLowerCase()
+          : "unknown"
+
+        if (reservationMealApiType !== currentMealTimeKey) {
+          // Mismatched meal times
+          const reservationMealDisplay = getBilingualMealName(
+            reservationMealApiType
+          )
+          const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
+          showError(
+            `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
+          )
+          return
+        }
         if (data.success && data.active) {
-          // Safely handle `meal_type`
-          const reservationMealApiType = data.data.meal_type
-            ? data.data.meal_type.toLowerCase()
-            : "unknown"
-
-          if (reservationMealApiType !== currentMealTimeKey) {
-            // Mismatched meal times
-            const reservationMealDisplay = getBilingualMealName(
-              reservationMealApiType
-            )
-            const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
-            showError(
-              `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
-            )
-            return
-          }
-
           // Show success message if everything matches
           return showSuccess(data.data)
         } else if (data.success && !data.active) {
