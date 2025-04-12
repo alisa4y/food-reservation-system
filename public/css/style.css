@@ -296,3 +296,13 @@ main {
   background-color: #dc3545; /* Bootstrap danger red */
   color: white;
 }
+/* Warning Message Styles */
+#warning-message.alert-warning {
+  background-color: #fff3cd; /* Light yellow background */
+  border-color: #ffeeba; /* Slightly darker yellow border */
+  color: #856404; /* Dark yellow/brown text */
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem; /* Match Bootstrap's default */
+}

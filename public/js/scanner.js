@@ -179,8 +179,9 @@ $(document).ready(function () {
         $("#print-token").attr("href", "#").hide()
       }
 
-      // Show the result container
+      // Show the result container and hide others
       $("#error-message").hide()
+      $("#warning-message").hide() // Hide warning message
       $("#result-container")
         .removeClass("border-danger")
         .addClass("border-success")
@@ -195,6 +196,7 @@ $(document).ready(function () {
       // Potentially show a generic error message to the user
       $("#error-message").text("An unexpected error occurred.").show()
       $("#result-container").hide()
+      $("#warning-message").hide() // Hide warning message on general error too
     }
   }
 
@@ -353,7 +355,7 @@ $(document).ready(function () {
             const mealDisplayBilingual = getBilingualMealName(
               data.data.meal_type
             )
-            showError(
+            showWarningMessage(
               `${employeeName} قد تناول الوجبة الحالية (${mealDisplayBilingual}) مسبقًا.<br>${employeeName} قبلاً وعده غذایی فعلی (${mealDisplayBilingual}) را مصرف کرده است.` // Arabic <br> Persian
             )
           } else {
@@ -404,6 +406,7 @@ $(document).ready(function () {
     // IMPORTANT: Use .html() here to render the <br> tags correctly
     $("#error-message").html(message).show()
     $("#result-container").hide()
+    $("#warning-message").hide() // Hide warning message
   }
 
   // Handle print token button
@@ -445,6 +448,7 @@ $(document).ready(function () {
 
   $("#result-container").hide()
   $("#error-message").hide()
+  $("#warning-message").hide()
   $("#scanner-video").hide()
   $("#loading-indicator").hide()
 }) // End document ready
@@ -478,4 +482,10 @@ function debounce(func, wait) {
     clearTimeout(timeout)
     timeout = setTimeout(() => func.apply(context, args), wait)
   }
+}
+function showWarningMessage(message) {
+  const warningMessageContainer = $("#warning-message")
+  warningMessageContainer.html(message).show() // Use .html() to render HTML content
+  $("#error-message").hide() // Hide error message
+  $("#result-container").hide() // Hide result container
 }
