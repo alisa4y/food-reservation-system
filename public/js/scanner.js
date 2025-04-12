@@ -265,7 +265,12 @@ $(document).ready(function () {
 
   // --- Event Handlers ---
   function onScanSuccess(decodedText) {
-    if (!isScannerRunning) return
+    if (!isScannerRunning || currentMealTimeKey === "out") {
+      showError(
+        "لا يمكن المسح خارج أوقات الوجبات.<br>اسکن خارج از زمان وعده غذایی مجاز نیست." // Arabic <br> Persian
+      )
+      return
+    }
 
     console.log(`Scan successful: ${decodedText}`)
     if (html5QrCode && isScannerRunning) {
@@ -303,6 +308,15 @@ $(document).ready(function () {
     $("#error-message").hide()
     $("#loading-indicator").show()
 
+    // Prevent API call if outside meal times
+    if (currentMealTimeKey === "out") {
+      showError(
+        "لا يمكن المسح خارج أوقات الوجبات.<br>اسکن خارج از زمان وعده غذایی مجاز نیست." // Arabic <br> Persian
+      )
+      $("#loading-indicator").hide()
+      return
+    }
+
     fetch(`/scanner/check-active/${employeeId}`, {
       method: "GET",
       headers: {
@@ -312,18 +326,11 @@ $(document).ready(function () {
       .then(response => {
         if (!response.ok) {
           if (response.status === 404) {
-            return response
-              .json()
-              .then(errData => {
-                throw new Error(
-                  "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد."
-                ) // Arabic <br> Persian
-              })
-              .catch(() => {
-                throw new Error(
-                  "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد."
-                ) // Arabic <br> Persian
-              })
+            return response.json().then(errData => {
+              throw new Error(
+                "لم يتم العثور على موظف بهذا الرقم.<br>کارمندی با این شماره یافت نشد." // Arabic <br> Persian
+              )
+            })
           }
           return response.json().then(errData => {
             throw new Error(
@@ -336,24 +343,32 @@ $(document).ready(function () {
       })
       .then(data => {
         if (data.success && data.active) {
-          const reservationMealApiType = data.data.meal_type.toLowerCase()
+          // Safely handle `meal_type`
+          const reservationMealApiType = data.data.meal_type
+            ? data.data.meal_type.toLowerCase()
+            : "unknown"
 
+          if (reservationMealApiType !== currentMealTimeKey) {
+            // Mismatched meal times
+            const reservationMealDisplay = getBilingualMealName(
+              reservationMealApiType
+            )
+            const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
+            showError(
+              `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
+            )
+            return
+          }
+
+          // Show success message if everything matches
           return showSuccess(data.data)
-
-          const reservationMealDisplay = getBilingualMealName(
-            reservationMealApiType
-          )
-          const currentMealDisplay = getBilingualMealName(currentMealTimeKey)
-          showError(
-            `الحجز الموجود (${reservationMealDisplay}) لا يتطابق مع وقت الوجبة الحالي (${currentMealDisplay}).<br>رزرو موجود (${reservationMealDisplay}) با زمان وعده فعلی (${currentMealDisplay}) مطابقت ندارد.` // Arabic <br> Persian
-          )
         } else if (data.success && !data.active) {
           if (data.consumed) {
             const employeeName = data.data.employee
               ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
               : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
             const mealDisplayBilingual = getBilingualMealName(
-              data.data.meal_type
+              data.data.meal_type || "unknown"
             )
             showWarningMessage(
               `${employeeName} قد تناول الوجبة الحالية (${mealDisplayBilingual}) مسبقًا.<br>${employeeName} قبلاً وعده غذایی فعلی (${mealDisplayBilingual}) را مصرف کرده است.` // Arabic <br> Persian
@@ -363,7 +378,7 @@ $(document).ready(function () {
               ? `${data.data.employee.first_name} ${data.data.employee.last_name}`
               : `الموظف<br>کارمند ${employeeId}` // Arabic <br> Persian prefix
             const mealDisplayBilingual = getBilingualMealName(
-              data.data.meal_type
+              data.data.meal_type || "unknown"
             )
             showError(
               `لا يوجد حجز نشط لـ ${employeeName} في وجبة ${mealDisplayBilingual} لهذا اليوم.<br>رزرو فعالی برای ${employeeName} در وعده ${mealDisplayBilingual} امروز وجود ندارد.` // Arabic <br> Persian
@@ -371,15 +386,15 @@ $(document).ready(function () {
           }
         } else {
           showError(
-            data.message || "خطأ في التحقق من الحجز.<br>خطا در بررسی رزرو."
-          ) // Arabic <br> Persian
+            data.message || "خطأ في التحقق من الحجز.<br>خطا در بررسی رزرو." // Arabic <br> Persian
+          )
         }
       })
       .catch(error => {
         console.error("Fetch error:", error)
         showError(
-          error.message || "خطأ في الاتصال بالخادم.<br>خطا در اتصال به سرور."
-        ) // Arabic <br> Persian
+          error.message || "خطأ في الاتصال بالخادم.<br>خطا در اتصال به سرور." // Arabic <br> Persian
+        )
       })
       .finally(() => {
         $("#loading-indicator").hide()
