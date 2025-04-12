@@ -481,6 +481,7 @@ function getMealNames(mealKeyOrApiType) {
     case "dinner":
     case "عشاء": // Match our internal key
       return { arabic: "عشاء", persian: "شام" }
+    case "out": // Match our internal key
     case "خارج": // Match our internal key
       // For "outside", return the descriptive phrase for both
       return { arabic: "خارج أوقات الوجبات", persian: "خارج از زمان وعده" }
