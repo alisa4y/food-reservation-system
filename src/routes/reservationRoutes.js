@@ -228,9 +228,9 @@ router.post("/import", upload.single("file"), async (req, res) => {
         const reservation = {
           employee_id: row.getCell(1).value?.toString().trim(),
           date: parseDateStr(row.getCell(2).value?.toString()),
-          breakfast: +(parseInt(row.getCell(3).value) == 1),
-          lunch: +(parseInt(row.getCell(4).value) == 1),
-          dinner: +(parseInt(row.getCell(5).value) == 1),
+          breakfast: parseMealStatus(row.getCell(3).value),
+          lunch: parseMealStatus(row.getCell(4).value),
+          dinner: parseMealStatus(row.getCell(5).value),
         }
 
         // Only add if employee_id and date exist
@@ -264,5 +264,16 @@ router.post("/import", upload.single("file"), async (req, res) => {
       .json({ success: false, message: "Failed to import reservations" })
   }
 })
+function parseMealStatus(value) {
+  const num = parseInt(value, 10) // Attempt to convert to integer
+
+  // Check if it's a valid number and within the desired range [0, 4]
+  if (!isNaN(num) && num >= 0 && num <= 4) {
+    return num
+  } else {
+    // If not a valid number or outside the range, return 0
+    return 0
+  }
+}
 
 module.exports = router
