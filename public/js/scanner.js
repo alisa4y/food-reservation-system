@@ -97,12 +97,12 @@ $(document).ready(function () {
       }
     }
   }
-  const breakfastStart = 7 * 60 // 7:00 AM
-  const breakfastEnd = 8 * 60 // 8:00 AM
-  const lunchStart = 12 * 60 + 30 // 12:30 PM
-  const lunchEnd = 14 * 60 + 30 // 2:30 PM
-  const dinnerStart = 19 * 60 + 30 // 7:30 PM
-  const dinnerEnd = 21 * 60 // 9:00 PM
+  const breakfastStart = 0 // 12:00 AM
+  const breakfastEnd = 11 * 60 // 11:00 AM
+  const lunchStart = 11 * 60 // 11:00 AM
+  const lunchEnd = 16 * 60 // 4:00 PM
+  const dinnerStart = 16 * 60 // 4:00 PM
+  const dinnerEnd = 23 * 60 // 11:00 PM
 
   function setCurrentMeal() {
     const now = new Date()
